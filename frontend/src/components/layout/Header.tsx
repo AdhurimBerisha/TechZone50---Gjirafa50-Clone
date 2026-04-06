@@ -1,23 +1,23 @@
 import { Search, Heart, ShoppingCart, User } from "lucide-react";
 import { Link, useNavigate } from "react-router";
-// import { useCartStore } from '@/stores/cartStore';
-// import { useWishlistStore } from '@/stores/wishlistStore';
-// import { useAuthStore } from '@/stores/authStore';
-// import { useUIStore } from '@/stores/uiStore';
-// import { useState } from "react";
+import { useCartStore } from "@/stores/cartStore";
+import { useWishlistStore } from "@/stores/wishlistStore";
+import { useAuthStore } from "@/stores/authStore";
+import { useUIStore } from "@/stores/uiStore";
+import { useState } from "react";
 
 const Header = () => {
-  //   const navigate = useNavigate();
-  //   const totalItems = useCartStore((s) => s.totalItems);
-  //   const wishlistCount = useWishlistStore((s) => s.items.length);
-  //   const { user, isAuthenticated } = useAuthStore();
-  //   const { searchQuery, setSearchQuery } = useUIStore();
-  //   const [localSearch, setLocalSearch] = useState(searchQuery);
+  const navigate = useNavigate();
+  const totalItems = useCartStore((s) => s.totalItems);
+  const wishlistCount = useWishlistStore((s) => s.items.length);
+  const { user, isAuthenticated } = useAuthStore();
+  const { searchQuery, setSearchQuery } = useUIStore();
+  const [localSearch, setLocalSearch] = useState(searchQuery);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    // setSearchQuery(localSearch);
-    // navigate(`/search?q=${encodeURIComponent(localSearch)}`);
+    setSearchQuery(localSearch);
+    navigate(`/search?q=${encodeURIComponent(localSearch)}`);
   };
 
   return (
@@ -29,7 +29,7 @@ const Header = () => {
         {/* Logo */}
         <Link to="/" className="flex-shrink-0">
           <span className="text-2xl font-bold text-white">
-            Tech<span className="text-primary">Store</span>
+            tech<span className="text-primary">store</span>
             <span className="text-primary text-lg font-normal">50</span>
           </span>
         </Link>
@@ -40,8 +40,8 @@ const Header = () => {
             <input
               type="text"
               placeholder="Kërko produkte"
-              //   value={localSearch}
-              //   onChange={(e) => setLocalSearch(e.target.value)}
+              value={localSearch}
+              onChange={(e) => setLocalSearch(e.target.value)}
               className="w-full h-10 pl-4 pr-12 rounded-lg bg-white text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary"
             />
             <button
@@ -60,11 +60,11 @@ const Header = () => {
             className="relative text-white hover:text-primary transition-colors"
           >
             <Heart className="h-6 w-6" />
-            {/* {wishlistCount > 0 && ( */}
-            <span className="absolute -top-2 -right-2 bg-primary text-primary-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium">
-              {/* {wishlistCount} */}
-            </span>
-            {/* )} */}
+            {wishlistCount > 0 && (
+              <span className="absolute -top-2 -right-2 bg-primary text-primary-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium">
+                {wishlistCount}
+              </span>
+            )}
           </Link>
 
           <Link
@@ -72,30 +72,30 @@ const Header = () => {
             className="relative text-white hover:text-primary transition-colors"
           >
             <ShoppingCart className="h-6 w-6" />
-            {/* {totalItems() > 0 && ( */}
-            <span className="absolute -top-2 -right-2 bg-primary text-primary-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium">
-              {/* {totalItems()} */}
-            </span>
-            {/* )} */}
+            {totalItems() > 0 && (
+              <span className="absolute -top-2 -right-2 bg-primary text-primary-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium">
+                {totalItems()}
+              </span>
+            )}
           </Link>
 
-          {/* {isAuthenticated ? ( */}
-          {/* <Link
-              to={user?.role === 'admin' ? '/admin' : '/account'}
+          {isAuthenticated ? (
+            <Link
+              to={user?.role === "admin" ? "/admin" : "/account"}
               className="flex items-center gap-2 text-white hover:text-primary transition-colors"
             >
               <User className="h-5 w-5" />
               <span className="text-sm hidden lg:inline">{user?.name}</span>
-            </Link> */}
-          {/* ) : ( */}
-          <Link
-            to="/login"
-            className="flex items-center gap-2 text-white hover:text-primary transition-colors border border-white/30 rounded-lg px-4 py-2"
-          >
-            <User className="h-5 w-5" />
-            <span className="text-sm">Kyçu</span>
-          </Link>
-          {/* )} */}
+            </Link>
+          ) : (
+            <Link
+              to="/login"
+              className="flex items-center gap-2 text-white hover:text-primary transition-colors border border-white/30 rounded-lg px-4 py-2"
+            >
+              <User className="h-5 w-5" />
+              <span className="text-sm">Kyçu</span>
+            </Link>
+          )}
         </div>
       </div>
     </header>
