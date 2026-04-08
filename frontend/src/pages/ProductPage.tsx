@@ -201,7 +201,7 @@ const ProductPage = () => {
 
               <Button
                 onClick={handleAddToCart}
-                className="flex-1 flex items-center justify-center gap-2"
+                className="flex-1 flex items-center justify-center gap-2 bg-orange-600"
               >
                 <ShoppingCart className="h-5 w-5" />
                 Shto në shportë

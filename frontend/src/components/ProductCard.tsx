@@ -97,7 +97,7 @@ const ProductCard = ({ product }: { product: Product }) => {
         {/* Add to cart */}
         <button
           onClick={() => addItem(product)}
-          className="mt-3 w-full flex items-center justify-center gap-2 bg-primary text-primary-foreground rounded-lg py-2 text-sm font-medium hover:bg-primary/90 transition-colors"
+          className="mt-3 w-full flex items-center justify-center gap-2 bg-orange-600 text-primary-foreground rounded-lg py-2 text-sm font-medium hover:bg-primary/90 transition-colors"
         >
           <ShoppingCart className="h-4 w-4" />
           Shto në shportë
