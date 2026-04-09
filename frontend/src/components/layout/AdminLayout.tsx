@@ -34,8 +34,8 @@ const AdminLayout = () => {
       <aside className="w-[260px] bg-[hsl(0,0%,18%)] text-white flex flex-col flex-shrink-0">
         <div className="p-5 border-b border-white/10">
           <Link to="/admin" className="text-xl font-bold">
-            tech<span className="text-primary">store</span>
-            <span className="text-primary text-sm font-normal">50</span>
+            Tech<span className="text-orange-600">Zone</span>
+            <span className="text-orange-600 text-lg font-normal">50</span>
           </Link>
           <p className="text-xs text-white/50 mt-1">Admin Panel</p>
         </div>
