@@ -3,7 +3,7 @@
     "rootDir": ".",
     "outDir": "./dist",
 
-    "module": "nodenext",
+    "module": "ESNext",
     "target": "esnext",
     "lib": ["esnext"],
     "types": ["node"],
