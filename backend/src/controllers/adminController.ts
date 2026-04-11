@@ -1,3 +1,5 @@
+import type { Request, Response } from "express";
+
 const getAdminDashboard = async (req: Request, res: Response) => {};
 
 const getAdminUsers = async (req: Request, res: Response) => {};
