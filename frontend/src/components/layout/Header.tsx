@@ -1,8 +1,8 @@
 import { Search, Heart, ShoppingCart, User } from "lucide-react";
 import { Link, useNavigate } from "react-router";
+import { useUser } from "@clerk/react";
 import { useCartStore } from "@/stores/cartStore";
 import { useWishlistStore } from "@/stores/wishlistStore";
-import { useAuthStore } from "@/stores/authStore";
 import { useUIStore } from "@/stores/uiStore";
 import { useState } from "react";
 
@@ -10,9 +10,14 @@ const Header = () => {
   const navigate = useNavigate();
   const totalItems = useCartStore((s) => s.totalItems);
   const wishlistCount = useWishlistStore((s) => s.items.length);
-  const { user, isAuthenticated } = useAuthStore();
   const { searchQuery, setSearchQuery } = useUIStore();
   const [localSearch, setLocalSearch] = useState(searchQuery);
+  const { isSignedIn, user } = useUser();
+
+  const email =
+    user?.primaryEmailAddress?.emailAddress ??
+    user?.emailAddresses?.[0]?.emailAddress;
+  const isAdmin = email === "admin@techstore50.com";
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -79,13 +84,15 @@ const Header = () => {
             )}
           </Link>
 
-          {isAuthenticated ? (
+          {isSignedIn ? (
             <Link
-              to={user?.role === "admin" ? "/admin" : "/account"}
+              to={isAdmin ? "/admin" : "/account"}
               className="flex items-center gap-2 text-white hover:text-primary transition-colors"
             >
               <User className="h-5 w-5" />
-              <span className="text-sm hidden lg:inline">{user?.name}</span>
+              <span className="text-sm hidden lg:inline">
+                {user?.fullName ?? user?.firstName ?? "Llogari"}
+              </span>
             </Link>
           ) : (
             <Link

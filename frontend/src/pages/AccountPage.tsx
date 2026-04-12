@@ -1,18 +1,25 @@
+import { useEffect } from "react";
 import { Link, useNavigate } from "react-router";
-import { useAuthStore } from "@/stores/authStore";
+import { useAuth, useUser } from "@clerk/react";
 import { User, Package, Heart, Settings, LogOut } from "lucide-react";
 
 const AccountPage = () => {
-  const { user, logout } = useAuthStore();
   const navigate = useNavigate();
+  const { isSignedIn, signOut } = useAuth();
+  const { user } = useUser();
+
+  useEffect(() => {
+    if (!isSignedIn) {
+      navigate("/login");
+    }
+  }, [isSignedIn, navigate]);
 
   if (!user) {
-    navigate("/login");
     return null;
   }
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await signOut();
     navigate("/");
   };
 
@@ -28,8 +35,13 @@ const AccountPage = () => {
               <User className="h-6 w-6 text-primary" />
             </div>
             <div>
-              <p className="font-medium">{user.name}</p>
-              <p className="text-sm text-muted-foreground">{user.email}</p>
+              <p className="font-medium">
+                {user.fullName ?? user.firstName ?? "Përdorues"}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                {user.primaryEmailAddress?.emailAddress ??
+                  user.emailAddresses?.[0]?.emailAddress}
+              </p>
             </div>
           </div>
 
@@ -73,7 +85,7 @@ const AccountPage = () => {
                 </label>
                 <input
                   type="text"
-                  value={user.name}
+                  value={user.fullName ?? user.firstName ?? ""}
                   readOnly
                   className="w-full border border-border rounded-lg px-4 py-2 text-sm bg-muted/50"
                 />
@@ -84,7 +96,11 @@ const AccountPage = () => {
                 </label>
                 <input
                   type="email"
-                  value={user.email}
+                  value={
+                    user.primaryEmailAddress?.emailAddress ??
+                    user.emailAddresses?.[0]?.emailAddress ??
+                    ""
+                  }
                   readOnly
                   className="w-full border border-border rounded-lg px-4 py-2 text-sm bg-muted/50"
                 />
