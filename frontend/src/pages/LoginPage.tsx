@@ -34,14 +34,14 @@ const LoginPage = () => {
                 routing="path"
                 path="/login"
                 signInUrl="/login"
-                redirectUrl="/"
+                forceRedirectUrl="/login"
               />
             ) : (
               <SignIn
                 routing="path"
                 path="/login"
                 signUpUrl="/login?mode=register"
-                redirectUrl="/"
+                forceRedirectUrl="/login"
               />
             )}
           </div>
