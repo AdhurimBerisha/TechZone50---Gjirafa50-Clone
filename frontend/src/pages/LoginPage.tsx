@@ -5,14 +5,20 @@ import { SignIn, SignUp, useUser } from "@clerk/react";
 const LoginPage = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { isSignedIn } = useUser();
+  const { isSignedIn, user } = useUser();
   const isRegister = searchParams.get("mode") === "register";
 
+  const email =
+    user?.primaryEmailAddress?.emailAddress ??
+    user?.emailAddresses?.[0]?.emailAddress;
+  const isAdmin = email?.endsWith("@techzone50.com") ?? false;
+
   useEffect(() => {
-    if (isSignedIn) {
-      navigate("/");
+    if (isSignedIn && user) {
+      // Redirect to admin dashboard if admin, otherwise home
+      navigate(isAdmin ? "/admin" : "/");
     }
-  }, [isSignedIn, navigate]);
+  }, [isSignedIn, user, isAdmin, navigate]);
 
   return (
     <div className="max-w-[1320px] mx-auto px-4 lg:px-8 py-12">

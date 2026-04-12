@@ -28,7 +28,7 @@ const AdminLayout = () => {
   const email =
     user?.primaryEmailAddress?.emailAddress ??
     user?.emailAddresses?.[0]?.emailAddress;
-  const isAdmin = email === "admin@techstore50.com";
+  const isAdmin = email?.endsWith("@techzone50.com") ?? false;
 
   useEffect(() => {
     if (!isSignedIn || !isAdmin) {
