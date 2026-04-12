@@ -1,5 +1,6 @@
+import { useEffect } from "react";
 import { Outlet, Link, useLocation, useNavigate } from "react-router";
-import { useAuthStore } from "@/stores/authStore";
+import { useAuth, useUser } from "@clerk/react";
 import {
   LayoutDashboard,
   Package,
@@ -19,12 +20,28 @@ const adminNav = [
 ];
 
 const AdminLayout = () => {
-  const { user, logout } = useAuthStore();
+  const { signOut, isSignedIn } = useAuth();
+  const { user } = useUser();
   const location = useLocation();
   const navigate = useNavigate();
 
-  const handleLogout = () => {
-    logout();
+  const email =
+    user?.primaryEmailAddress?.emailAddress ??
+    user?.emailAddresses?.[0]?.emailAddress;
+  const isAdmin = email === "admin@techstore50.com";
+
+  useEffect(() => {
+    if (!isSignedIn || !isAdmin) {
+      navigate("/login");
+    }
+  }, [isSignedIn, isAdmin, navigate]);
+
+  if (!isSignedIn || !user || !isAdmin) {
+    return null;
+  }
+
+  const handleLogout = async () => {
+    await signOut();
     navigate("/");
   };
 
@@ -87,7 +104,7 @@ const AdminLayout = () => {
             <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
               <Users className="h-4 w-4 text-primary" />
             </div>
-            {user?.name}
+            {user.fullName ?? email}
           </div>
         </header>
         <main className="flex-1 p-6">
