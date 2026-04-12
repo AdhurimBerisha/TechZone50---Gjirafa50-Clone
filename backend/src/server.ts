@@ -3,6 +3,7 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "./generated/prisma/client.js";
 import express from "express";
 import cors from "cors";
+import userRoutes from "./routes/userRoutes.js";
 
 async function verifyDatabase(): Promise<void> {
   const databaseUrl = process.env.DATABASE_URL;
@@ -39,6 +40,8 @@ async function start(): Promise<void> {
   app.get("/", (req, res) => {
     res.json({ message: "API is working 🚀" });
   });
+
+  app.use("/api/users", userRoutes);
 
   const PORT = process.env.PORT || 5000;
 
