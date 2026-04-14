@@ -20,3 +20,22 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+model Product {
+  id           String    @id @default(cuid())
+  name         String
+  slug         String    @unique
+  description  String?
+  category     String
+  categorySlug String
+  price        Float
+  oldPrice     Float?
+  rating       Float     @default(0)
+  image        String?
+  images       String[]  @default([])
+  stock        Int       @default(0)
+  isFeatured   Boolean   @default(false)
+  isActive     Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}

@@ -5,6 +5,7 @@ import {
   getAdminProducts,
   getAdminOrders,
   getAdminSettings,
+  createProduct,
 } from "../controllers/adminController";
 
 const router = Router();
@@ -12,6 +13,7 @@ const router = Router();
 router.get("/dashboard", getAdminDashboard);
 router.get("/users", getAdminUsers);
 router.get("/products", getAdminProducts);
+router.post("/products", createProduct);
 router.get("/orders", getAdminOrders);
 router.get("/settings", getAdminSettings);
 
