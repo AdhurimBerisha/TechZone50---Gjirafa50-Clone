@@ -1,7 +1,7 @@
 import { Router } from "express";
 import {
   getAdminDashboard,
-  getAdminUsers,
+  getAllUsers,
   getAdminProducts,
   getAdminOrders,
   getAdminSettings,
@@ -11,7 +11,7 @@ import {
 const router = Router();
 
 router.get("/dashboard", getAdminDashboard);
-router.get("/users", getAdminUsers);
+router.get("/users", getAllUsers);
 router.get("/products", getAdminProducts);
 router.post("/products", createProduct);
 router.get("/orders", getAdminOrders);
