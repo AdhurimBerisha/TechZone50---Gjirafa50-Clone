@@ -21,7 +21,34 @@ const getAllUsers = async (req: Request, res: Response) => {
   }
 };
 
-const getAdminProducts = async (req: Request, res: Response) => {};
+const getAllProducts = async (req: Request, res: Response) => {
+  try {
+    const products = await prisma.product.findMany({
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        description: true,
+        category: true,
+        categorySlug: true,
+        price: true,
+        oldPrice: true,
+        rating: true,
+        image: true,
+        images: true,
+        stock: true,
+        isFeatured: true,
+        isActive: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+    return res.status(200).json({ success: true, products });
+  } catch (error) {
+    console.error("Error fetching products:", error);
+    return res.status(500).json({ error: "Failed to fetch products" });
+  }
+};
 
 const getAdminOrders = async (req: Request, res: Response) => {};
 
@@ -123,7 +150,7 @@ const deleteProduct = async (req: Request, res: Response) => {};
 export {
   getAdminDashboard,
   getAllUsers,
-  getAdminProducts,
+  getAllProducts,
   getAdminOrders,
   getAdminSettings,
   createProduct,

@@ -2,7 +2,7 @@ import { Router } from "express";
 import {
   getAdminDashboard,
   getAllUsers,
-  getAdminProducts,
+  getAllProducts,
   getAdminOrders,
   getAdminSettings,
   createProduct,
@@ -12,7 +12,7 @@ const router = Router();
 
 router.get("/dashboard", getAdminDashboard);
 router.get("/users", getAllUsers);
-router.get("/products", getAdminProducts);
+router.get("/products", getAllProducts);
 router.post("/products", createProduct);
 router.get("/orders", getAdminOrders);
 router.get("/settings", getAdminSettings);
