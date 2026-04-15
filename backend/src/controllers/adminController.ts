@@ -3,7 +3,23 @@ import { prisma } from "../lib/prisma.js";
 
 const getAdminDashboard = async (req: Request, res: Response) => {};
 
-const getAdminUsers = async (req: Request, res: Response) => {};
+const getAllUsers = async (req: Request, res: Response) => {
+  try {
+    const users = await prisma.user.findMany({
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+    return res.status(200).json({ success: true, users });
+  } catch (error) {
+    console.error("Error fetching users:", error);
+    return res.status(500).json({ error: "Failed to fetch users" });
+  }
+};
 
 const getAdminProducts = async (req: Request, res: Response) => {};
 
@@ -106,7 +122,7 @@ const deleteProduct = async (req: Request, res: Response) => {};
 
 export {
   getAdminDashboard,
-  getAdminUsers,
+  getAllUsers,
   getAdminProducts,
   getAdminOrders,
   getAdminSettings,
