@@ -13,10 +13,53 @@ datasource db {
 }
 
 model User {
+  id            String   @id @default(cuid())
+  clerkId       String?  @unique
+  email         String   @unique
+  name          String?
+  phone         String?
+  avatar        String?
+  
+  // Profile Information
+  bio           String?
+  
+  // Address Information
+  addresses     Address[]
+  defaultAddressId String?
+  
+  // Account Type & Permissions
+  role          UserRole @default(CUSTOMER)
+  isActive      Boolean  @default(true)
+  
+  // Preferences
+  newsletter    Boolean  @default(false)
+  notifications Boolean  @default(true)
+  
+  // Wishlist & Orders
+  wishlistItems WishlistItem[]
+  orders        Order[]
+  
+  // Audit
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  lastLogin     DateTime?
+}
+
+model Address {
   id        String   @id @default(cuid())
-  clerkId   String?  @unique
-  email     String   @unique
-  name      String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  fullName  String
+  phone     String
+  email     String
+  street    String
+  city      String
+  state     String
+  zipCode   String
+  country   String
+  isDefault Boolean  @default(false)
+  
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -38,4 +81,55 @@ model Product {
   isActive     Boolean   @default(true)
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
+}
+
+model Order {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  items     OrderItem[]
+  total     Float
+  status    OrderStatus @default(PENDING)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model OrderItem {
+  id        String   @id @default(cuid())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  
+  productId String
+  quantity  Int
+  price     Float
+}
+
+model WishlistItem {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  productId String
+  
+  createdAt DateTime @default(now())
+  
+  @@unique([userId, productId])
+}
+
+enum UserRole {
+  CUSTOMER
+  ADMIN
+  VENDOR
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  REFUNDED
 }
