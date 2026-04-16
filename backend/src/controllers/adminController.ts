@@ -292,4 +292,5 @@ export {
   getAdminSettings,
   createProduct,
   updateProduct,
+  deleteProduct,
 };
