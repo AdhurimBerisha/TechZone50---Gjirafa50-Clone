@@ -35,7 +35,7 @@ const Header = () => {
         <Link to="/" className="flex-shrink-0">
           <span className="text-2xl font-bold text-white">
             Tech<span className="text-orange-600">Zone</span>
-            <span className="text-orange-600 text-xl font-normal">50</span>
+            <span className="text-orange-600 text-2xl font-normal">50</span>
           </span>
         </Link>
 
