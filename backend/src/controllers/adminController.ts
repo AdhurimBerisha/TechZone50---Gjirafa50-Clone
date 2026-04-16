@@ -145,7 +145,7 @@ const createProduct = async (req: Request, res: Response) => {
 
 const updateProduct = async (req: Request, res: Response) => {
   const { id } = req.params;
-  const productId = Array.isArray(id) ? id[0] : id;
+  const productId = Array.isArray(id) ? id[0] : (id as string);
   const {
     name,
     slug,
@@ -253,7 +253,36 @@ const updateProduct = async (req: Request, res: Response) => {
   }
 };
 
-const deleteProduct = async (req: Request, res: Response) => {};
+const deleteProduct = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const productId = Array.isArray(id) ? id[0] : (id as string);
+
+    if (!productId) {
+      return res.status(400).json({ error: "Product ID is required" });
+    }
+
+    const existingProduct = await prisma.product.findUnique({
+      where: { id: productId },
+    });
+
+    if (!existingProduct) {
+      return res.status(404).json({ error: "Product not found" });
+    }
+
+    await prisma.product.delete({
+      where: { id: productId },
+    });
+
+    return res
+      .status(200)
+      .json({ success: true, message: "Product deleted successfully" });
+  } catch (error) {
+    console.error("Delete product error:", error);
+
+    return res.status(500).json({ message: "Failed to delete product" });
+  }
+};
 
 export {
   getAdminDashboard,
