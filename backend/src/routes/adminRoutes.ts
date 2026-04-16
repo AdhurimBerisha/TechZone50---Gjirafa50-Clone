@@ -7,6 +7,7 @@ import {
   getAdminSettings,
   createProduct,
   updateProduct,
+  deleteProduct,
 } from "../controllers/adminController";
 
 const router = Router();
@@ -18,5 +19,6 @@ router.post("/products", createProduct);
 router.put("/products/:id", updateProduct);
 router.get("/orders", getAdminOrders);
 router.get("/settings", getAdminSettings);
+router.delete("/products/:id", deleteProduct);
 
 export default router;
