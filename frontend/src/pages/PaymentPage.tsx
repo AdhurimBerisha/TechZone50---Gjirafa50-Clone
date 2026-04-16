@@ -41,7 +41,6 @@ const PaymentPage = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Basic validation
     if (
       !formData.firstName ||
       !formData.lastName ||
@@ -62,17 +61,13 @@ const PaymentPage = () => {
     setIsSubmitting(true);
 
     try {
-      // Simulate API call
       await new Promise((resolve) => setTimeout(resolve, 2000));
 
-      // Generate order number
       const orderNum = `GJ${Date.now().toString().slice(-8)}`;
       setOrderNumber(orderNum);
 
-      // Clear cart
       clearCart();
 
-      // Show success
       setOrderCompleted(true);
     } catch (error) {
       alert(

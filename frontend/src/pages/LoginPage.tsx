@@ -15,7 +15,6 @@ const LoginPage = () => {
 
   useEffect(() => {
     if (isSignedIn && user) {
-      // Redirect to admin dashboard if admin, otherwise home
       navigate(isAdmin ? "/admin" : "/");
     }
   }, [isSignedIn, user, isAdmin, navigate]);
