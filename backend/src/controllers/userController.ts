@@ -122,6 +122,27 @@ const deleteUser = async (req: Request, res: Response) => {
   }
 };
 
-const getUserById = async (req: Request, res: Response) => {};
+const getUserById = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    const userId = Array.isArray(id) ? id[0] : (id as string);
+
+    if (!userId) {
+      return res.status(400).json({ error: "User ID is required" });
+    }
+
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    return res.status(200).json({ success: true, user });
+  } catch (error) {
+    console.error("Error getting user by ID:", error);
+    return res.status(500).json({ error: "Failed to get user by ID" });
+  }
+};
 
 export { syncUser, updateProfile, updateUser, deleteUser, getUserById };
