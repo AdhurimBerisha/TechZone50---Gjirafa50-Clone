@@ -1,6 +1,7 @@
 import { Router } from "express";
 import {
   syncUser,
+  updateProfile,
   createUser,
   getUsers,
   updateUser,
@@ -11,6 +12,7 @@ import {
 const router = Router();
 
 router.post("/sync", syncUser);
+router.put("/profile", updateProfile);
 router.post("/create", createUser);
 
 router.get("/", getUsers);
