@@ -2,7 +2,7 @@ import type { Request, Response } from "express";
 import type { Prisma } from "../generated/prisma/client.js";
 import { prisma } from "../lib/prisma.js";
 
-export const syncUser = async (req: Request, res: Response) => {
+const syncUser = async (req: Request, res: Response) => {
   const { clerkId, email, name } = req.body;
 
   if (!clerkId || !email) {
@@ -22,7 +22,7 @@ export const syncUser = async (req: Request, res: Response) => {
   }
 };
 
-export const updateProfile = async (req: Request, res: Response) => {
+const updateProfile = async (req: Request, res: Response) => {
   const { clerkId, name, phone, avatar, bio, newsletter, notifications } =
     req.body;
 
@@ -46,9 +46,7 @@ export const updateProfile = async (req: Request, res: Response) => {
   }
   if (avatar !== undefined) {
     if (avatar !== null && typeof avatar !== "string") {
-      return res
-        .status(400)
-        .json({ error: "avatar must be a string or null" });
+      return res.status(400).json({ error: "avatar must be a string or null" });
     }
     data.avatar = avatar;
   }
@@ -66,9 +64,7 @@ export const updateProfile = async (req: Request, res: Response) => {
   }
   if (notifications !== undefined) {
     if (typeof notifications !== "boolean") {
-      return res
-        .status(400)
-        .json({ error: "notifications must be a boolean" });
+      return res.status(400).json({ error: "notifications must be a boolean" });
     }
     data.notifications = notifications;
   }
@@ -94,12 +90,47 @@ export const updateProfile = async (req: Request, res: Response) => {
   }
 };
 
-export const createUser = async (req: Request, res: Response) => {};
+const getUsers = async (req: Request, res: Response) => {};
 
-export const getUsers = async (req: Request, res: Response) => {};
+const updateUser = async (req: Request, res: Response) => {};
 
-export const updateUser = async (req: Request, res: Response) => {};
+const deleteUser = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const userId = Array.isArray(id) ? id[0] : (id as string);
 
-export const deleteUser = async (req: Request, res: Response) => {};
+    if (!userId) {
+      return res.status(400).json({ error: "User ID is required" });
+    }
 
-export const getUserById = async (req: Request, res: Response) => {};
+    const existingUser = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!existingUser) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    await prisma.user.delete({
+      where: { id: userId },
+    });
+
+    return res
+      .status(200)
+      .json({ success: true, message: "User deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting user:", error);
+    return res.status(500).json({ error: "Failed to delete user" });
+  }
+};
+
+const getUserById = async (req: Request, res: Response) => {};
+
+export {
+  syncUser,
+  updateProfile,
+  getUsers,
+  updateUser,
+  deleteUser,
+  getUserById,
+};
