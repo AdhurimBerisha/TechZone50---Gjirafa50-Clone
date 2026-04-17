@@ -90,8 +90,6 @@ const updateProfile = async (req: Request, res: Response) => {
   }
 };
 
-const getUsers = async (req: Request, res: Response) => {};
-
 const updateUser = async (req: Request, res: Response) => {};
 
 const deleteUser = async (req: Request, res: Response) => {
@@ -126,11 +124,4 @@ const deleteUser = async (req: Request, res: Response) => {
 
 const getUserById = async (req: Request, res: Response) => {};
 
-export {
-  syncUser,
-  updateProfile,
-  getUsers,
-  updateUser,
-  deleteUser,
-  getUserById,
-};
+export { syncUser, updateProfile, updateUser, deleteUser, getUserById };
