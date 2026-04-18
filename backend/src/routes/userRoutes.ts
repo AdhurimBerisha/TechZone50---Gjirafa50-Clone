@@ -15,7 +15,7 @@ router.post("/sync", requireClerkAuth, syncUser);
 router.put("/profile", requireClerkAuth, updateProfile);
 router.get("/me", requireClerkAuth, getCurrentUser);
 router.get("/:id", getUserById);
-router.put("/:id", updateUser);
+router.put("/:id", requireClerkAuth, updateUser);
 router.delete("/:id", deleteUser);
 
 export default router;

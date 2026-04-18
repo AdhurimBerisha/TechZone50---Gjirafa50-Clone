@@ -14,7 +14,8 @@ const syncUser = async (req: Request, res: Response) => {
   try {
     const user = await prisma.user.upsert({
       where: { clerkId },
-      update: { email, name },
+      // Keep profile edits (e.g. custom name) and only refresh email on sign-in sync.
+      update: { email },
       create: { clerkId, email, name },
     });
     res.json({ success: true, user });
