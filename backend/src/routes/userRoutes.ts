@@ -5,12 +5,15 @@ import {
   updateUser,
   deleteUser,
   getUserById,
-} from "../controllers/userController.js";
+  getCurrentUser,
+} from "../controllers/userController";
+import { requireClerkAuth } from "../middleware/authMiddleware";
 
 const router = Router();
 
-router.post("/sync", syncUser);
-router.put("/profile", updateProfile);
+router.post("/sync", requireClerkAuth, syncUser);
+router.put("/profile", requireClerkAuth, updateProfile);
+router.get("/me", requireClerkAuth, getCurrentUser);
 router.get("/:id", getUserById);
 router.put("/:id", updateUser);
 router.delete("/:id", deleteUser);
