@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import CategorySidebar from "@/components/layout/CategorySidebar";
 import ProductCard from "@/components/ProductCard";
-import { products, categories } from "@/data/products";
+import { products } from "@/data/products";
 
 const tabs = [
   "Për ty",
@@ -22,17 +22,6 @@ const tabs = [
   "Tastierë",
   "TV",
   "Kufje & Mikrofon",
-];
-
-const heroSlides = [
-  {
-    title: "GIGABYTE GS25F2A",
-    subtitle: '25" FHD 240Hz 1ms',
-    oldPrice: "144.50€",
-    newPrice: "119.50€",
-    installment: "3.32€ x 36 Muaj",
-    bg: "from-[hsl(0,0%,18%)] to-[hsl(17,100%,20%)]",
-  },
 ];
 
 const promos = [

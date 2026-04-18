@@ -2,9 +2,7 @@ import {
   Package,
   ShoppingCart,
   Users,
-  TrendingUp,
   DollarSign,
-  Eye,
 } from "lucide-react";
 import { products } from "@/data/products";
 

@@ -1,12 +1,14 @@
 import { useEffect } from "react";
 import { Link, useNavigate } from "react-router";
 import { useAuth, useUser } from "@clerk/react";
-import { User, Package, Heart, Settings, LogOut } from "lucide-react";
+import { User, Package, Heart, LogOut } from "lucide-react";
+import { useAuthStore } from "@/stores/authStore";
 
 const AccountPage = () => {
   const navigate = useNavigate();
   const { isSignedIn, signOut } = useAuth();
   const { user } = useUser();
+  const currentUser = useAuthStore((state) => state.currentUser);
 
   useEffect(() => {
     if (!isSignedIn) {
@@ -17,6 +19,14 @@ const AccountPage = () => {
   if (!user) {
     return null;
   }
+
+  const displayName =
+    currentUser?.name ?? user.fullName ?? user.firstName ?? "Përdorues";
+  const displayEmail =
+    currentUser?.email ??
+    user.primaryEmailAddress?.emailAddress ??
+    user.emailAddresses?.[0]?.emailAddress ??
+    "";
 
   const handleLogout = async () => {
     await signOut();
@@ -35,13 +45,13 @@ const AccountPage = () => {
               <User className="h-6 w-6 text-primary" />
             </div>
             <div>
-              <p className="font-medium">
-                {user.fullName ?? user.firstName ?? "Përdorues"}
-              </p>
-              <p className="text-sm text-muted-foreground">
-                {user.primaryEmailAddress?.emailAddress ??
-                  user.emailAddresses?.[0]?.emailAddress}
-              </p>
+              <p className="font-medium">{displayName}</p>
+              <p className="text-sm text-muted-foreground">{displayEmail}</p>
+              {currentUser?.role && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  Roli: {currentUser.role}
+                </p>
+              )}
             </div>
           </div>
 
@@ -85,7 +95,7 @@ const AccountPage = () => {
                 </label>
                 <input
                   type="text"
-                  value={user.fullName ?? user.firstName ?? ""}
+                  value={displayName}
                   readOnly
                   className="w-full border border-border rounded-lg px-4 py-2 text-sm bg-muted/50"
                 />
@@ -96,11 +106,7 @@ const AccountPage = () => {
                 </label>
                 <input
                   type="email"
-                  value={
-                    user.primaryEmailAddress?.emailAddress ??
-                    user.emailAddresses?.[0]?.emailAddress ??
-                    ""
-                  }
+                  value={displayEmail}
                   readOnly
                   className="w-full border border-border rounded-lg px-4 py-2 text-sm bg-muted/50"
                 />
