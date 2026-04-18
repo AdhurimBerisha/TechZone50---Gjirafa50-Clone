@@ -1,14 +1,20 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { useAuth, useUser } from "@clerk/react";
-import { User, Package, Heart, LogOut } from "lucide-react";
+import { User, Package, Heart, LogOut, Save, Loader2 } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
 
 const AccountPage = () => {
   const navigate = useNavigate();
-  const { isSignedIn, signOut } = useAuth();
+  const { isSignedIn, signOut, getToken } = useAuth();
   const { user } = useUser();
-  const currentUser = useAuthStore((state) => state.currentUser);
+  const { currentUser, updateUser, error } = useAuthStore();
+
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [bio, setBio] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+  const [successMsg, setSuccessMsg] = useState("");
 
   useEffect(() => {
     if (!isSignedIn) {
@@ -16,17 +22,41 @@ const AccountPage = () => {
     }
   }, [isSignedIn, navigate]);
 
+  useEffect(() => {
+    if (currentUser) {
+      setName(currentUser.name ?? "");
+      setPhone(currentUser.phone ?? "");
+      setBio(currentUser.bio ?? "");
+    }
+  }, [currentUser]);
+
   if (!user) {
     return null;
   }
 
-  const displayName =
-    currentUser?.name ?? user.fullName ?? user.firstName ?? "Përdorues";
   const displayEmail =
     currentUser?.email ??
     user.primaryEmailAddress?.emailAddress ??
     user.emailAddresses?.[0]?.emailAddress ??
     "";
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    setSuccessMsg("");
+    try {
+      const token = await getToken();
+      if (!token) throw new Error("Not authenticated");
+      await updateUser(token, { name, phone, bio });
+      setSuccessMsg("Profili u përditësua me sukses!");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const isDirty =
+    name !== (currentUser?.name ?? "") ||
+    phone !== (currentUser?.phone ?? "") ||
+    bio !== (currentUser?.bio ?? "");
 
   const handleLogout = async () => {
     await signOut();
@@ -45,7 +75,7 @@ const AccountPage = () => {
               <User className="h-6 w-6 text-primary" />
             </div>
             <div>
-              <p className="font-medium">{displayName}</p>
+              <p className="font-medium">{name || "Përdorues"}</p>
               <p className="text-sm text-muted-foreground">{displayEmail}</p>
               {currentUser?.role && (
                 <p className="text-xs text-muted-foreground mt-1">
@@ -95,9 +125,9 @@ const AccountPage = () => {
                 </label>
                 <input
                   type="text"
-                  value={displayName}
-                  readOnly
-                  className="w-full border border-border rounded-lg px-4 py-2 text-sm bg-muted/50"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="w-full border border-border rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
                 />
               </div>
               <div>
@@ -108,9 +138,55 @@ const AccountPage = () => {
                   type="email"
                   value={displayEmail}
                   readOnly
-                  className="w-full border border-border rounded-lg px-4 py-2 text-sm bg-muted/50"
+                  className="w-full border border-border rounded-lg px-4 py-2 text-sm bg-muted/50 cursor-not-allowed"
                 />
               </div>
+
+              <div>
+                <label className="block text-sm text-muted-foreground mb-1">
+                  Telefoni
+                </label>
+                <input
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="+383 ..."
+                  className="w-full border border-border rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                />
+              </div>
+
+              <div className="md:col-span-2">
+                <label className="block text-sm text-muted-foreground mb-1">
+                  Bio
+                </label>
+                <textarea
+                  value={bio}
+                  onChange={(e) => setBio(e.target.value)}
+                  rows={3}
+                  placeholder="Diçka rreth jush..."
+                  className="w-full border border-border rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 resize-none"
+                />
+              </div>
+            </div>
+
+            {error && <p className="mt-3 text-sm text-destructive">{error}</p>}
+            {successMsg && (
+              <p className="mt-3 text-sm text-green-600">{successMsg}</p>
+            )}
+
+            <div className="mt-4 flex justify-end">
+              <button
+                onClick={handleSave}
+                disabled={isSaving || !isDirty}
+                className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary/90 transition-colors"
+              >
+                {isSaving ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Save className="h-4 w-4" />
+                )}
+                Ruaj ndryshimet
+              </button>
             </div>
           </div>
 
