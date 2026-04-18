@@ -1,10 +1,11 @@
 import "dotenv/config";
 import { PrismaPg } from "@prisma/adapter-pg";
-import { PrismaClient } from "./generated/prisma/client.js";
+import { PrismaClient } from "./generated/prisma/client";
 import express from "express";
 import cors from "cors";
-import userRoutes from "./routes/userRoutes.js";
-import adminRoutes from "./routes/adminRoutes.js";
+import { clerkMiddleware } from "@clerk/express";
+import userRoutes from "./routes/userRoutes";
+import adminRoutes from "./routes/adminRoutes";
 
 async function verifyDatabase(): Promise<void> {
   const databaseUrl = process.env.DATABASE_URL;
@@ -37,6 +38,7 @@ async function start(): Promise<void> {
 
   app.use(cors());
   app.use(express.json());
+  app.use(clerkMiddleware());
 
   app.get("/", (req, res) => {
     res.json({ message: "API is working 🚀" });

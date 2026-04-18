@@ -1,9 +1,11 @@
 import type { Request, Response } from "express";
-import type { Prisma } from "../generated/prisma/client.js";
-import { prisma } from "../lib/prisma.js";
+import type { Prisma } from "../generated/prisma/client";
+import { prisma } from "../lib/prisma";
+import { getClerkUserId } from "../middleware/authMiddleware";
 
 const syncUser = async (req: Request, res: Response) => {
-  const { clerkId, email, name } = req.body;
+  const clerkId = getClerkUserId(req);
+  const { email, name } = req.body;
 
   if (!clerkId || !email) {
     return res.status(400).json({ error: "clerkId and email are required" });
@@ -23,8 +25,8 @@ const syncUser = async (req: Request, res: Response) => {
 };
 
 const updateProfile = async (req: Request, res: Response) => {
-  const { clerkId, name, phone, avatar, bio, newsletter, notifications } =
-    req.body;
+  const clerkId = getClerkUserId(req);
+  const { name, phone, avatar, bio, newsletter, notifications } = req.body;
 
   if (!clerkId || typeof clerkId !== "string") {
     return res.status(400).json({ error: "clerkId is required" });
@@ -94,28 +96,20 @@ const updateUser = async (req: Request, res: Response) => {};
 
 const deleteUser = async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
-    const userId = Array.isArray(id) ? id[0] : (id as string);
+    const clerkId = getClerkUserId(req);
 
-    if (!userId) {
-      return res.status(400).json({ error: "User ID is required" });
-    }
-
-    const existingUser = await prisma.user.findUnique({
-      where: { id: userId },
-    });
-
-    if (!existingUser) {
-      return res.status(404).json({ error: "User not found" });
+    if (!clerkId) {
+      return res.status(401).json({ error: "Unauthorized" });
     }
 
     await prisma.user.delete({
-      where: { id: userId },
+      where: { clerkId },
     });
 
-    return res
-      .status(200)
-      .json({ success: true, message: "User deleted successfully" });
+    return res.status(200).json({
+      success: true,
+      message: "Account deleted successfully",
+    });
   } catch (error) {
     console.error("Error deleting user:", error);
     return res.status(500).json({ error: "Failed to delete user" });
@@ -145,4 +139,39 @@ const getUserById = async (req: Request, res: Response) => {
   }
 };
 
-export { syncUser, updateProfile, updateUser, deleteUser, getUserById };
+const getCurrentUser = async (req: Request, res: Response) => {
+  try {
+    const clerkId = getClerkUserId(req);
+
+    if (!clerkId) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { clerkId },
+      include: {
+        addresses: true,
+        wishlistItems: true,
+        orders: true,
+      },
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    return res.status(200).json({ success: true, user });
+  } catch (error) {
+    console.error("Error getting current user:", error);
+    return res.status(500).json({ error: "Failed to get current user" });
+  }
+};
+
+export {
+  syncUser,
+  updateProfile,
+  updateUser,
+  deleteUser,
+  getUserById,
+  getCurrentUser,
+};
