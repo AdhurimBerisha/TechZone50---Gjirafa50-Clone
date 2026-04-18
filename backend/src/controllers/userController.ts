@@ -92,7 +92,24 @@ const updateProfile = async (req: Request, res: Response) => {
   }
 };
 
-const updateUser = async (req: Request, res: Response) => {};
+const updateUser = async (req: Request, res: Response) => {
+  try {
+    const clerkId = getClerkUserId(req);
+    const { name, phone, avatar, bio, newsletter, notifications } = req.body;
+    if (!clerkId) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const user = await prisma.user.update({
+      where: { clerkId },
+      data: { name, phone, avatar, bio, newsletter, notifications },
+    });
+    return res.status(200).json({ success: true, user });
+  } catch (error) {
+    console.error("Error updating user:", error);
+    return res.status(500).json({ error: "Failed to update user" });
+  }
+};
 
 const deleteUser = async (req: Request, res: Response) => {
   try {
