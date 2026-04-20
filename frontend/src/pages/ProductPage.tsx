@@ -1,9 +1,9 @@
 import { useParams, Link } from "react-router";
-import { useState } from "react";
-import { products } from "@/data/products";
+import { useEffect, useState } from "react";
 import ProductCard from "@/components/ProductCard";
 import { useCartStore } from "@/stores/cartStore";
 import { useWishlistStore } from "@/stores/wishlistStore";
+import { useProductStore } from "@/stores/productStore";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -22,12 +22,27 @@ import {
 } from "lucide-react";
 
 const ProductPage = () => {
-  const { slug } = useParams();
-  const product = products.find((p) => p.slug === slug);
+  const { id } = useParams();
+  const product = useProductStore((s) => (id ? s.getProductById(id) : undefined));
+  const isLoading = useProductStore((s) => s.isLoading);
+  const fetchProductById = useProductStore((s) => s.fetchProductById);
+  const allProducts = useProductStore((s) => s.products);
   const [quantity, setQuantity] = useState(1);
   const [installmentMonths, setInstallmentMonths] = useState(36);
   const addItem = useCartStore((s) => s.addItem);
   const { isInWishlist, toggleItem } = useWishlistStore();
+
+  useEffect(() => {
+    if (id) void fetchProductById(id);
+  }, [fetchProductById, id]);
+
+  if (!product && isLoading) {
+    return (
+      <div className="max-w-[1320px] mx-auto px-4 lg:px-8 py-12 text-center">
+        <h1 className="text-2xl font-semibold">Duke ngarkuar...</h1>
+      </div>
+    );
+  }
 
   if (!product) {
     return (
@@ -41,7 +56,7 @@ const ProductPage = () => {
   }
 
   const wishlisted = isInWishlist(product.id);
-  const related = products
+  const related = allProducts
     .filter(
       (p) => p.categorySlug === product.categorySlug && p.id !== product.id,
     )

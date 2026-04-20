@@ -44,7 +44,7 @@ const ProductCard = ({ product }: { product: Product }) => {
       </button>
 
       {/* Image */}
-      <Link to={`/product/${product.slug}`} className="block p-4">
+      <Link to={`/product/${product.id}`} className="block p-4">
         <div className="aspect-square flex items-center justify-center overflow-hidden">
           <img
             src={product.image}
@@ -57,7 +57,7 @@ const ProductCard = ({ product }: { product: Product }) => {
 
       {/* Info */}
       <div className="p-4 pt-0">
-        <Link to={`/product/${product.slug}`}>
+        <Link to={`/product/${product.id}`}>
           <h3 className="text-sm font-medium text-foreground line-clamp-2 min-h-[2.5rem] hover:text-primary transition-colors">
             {product.name}
           </h3>
