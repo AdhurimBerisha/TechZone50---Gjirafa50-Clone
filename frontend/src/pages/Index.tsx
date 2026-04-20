@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import {
   ChevronLeft,
@@ -12,6 +12,7 @@ import {
 import CategorySidebar from "@/components/layout/CategorySidebar";
 import ProductCard from "@/components/ProductCard";
 import { products } from "@/data/products";
+import { useProductStore } from "@/stores/productStore";
 
 const tabs = [
   "Për ty",
@@ -50,11 +51,18 @@ const promos = [
 const Index = () => {
   const [activeTab, setActiveTab] = useState("Për ty");
   const [showTrust, setShowTrust] = useState(true);
+  const { products: fetchedProducts, fetchAllProducts } = useProductStore();
+
+  useEffect(() => {
+    void fetchAllProducts();
+  }, [fetchAllProducts]);
+
+  const allProducts = fetchedProducts.length > 0 ? fetchedProducts : products;
 
   const filteredProducts =
     activeTab === "Për ty"
-      ? products
-      : products.filter((p) => {
+      ? allProducts
+      : allProducts.filter((p) => {
           const tab = activeTab.toLowerCase();
           return (
             p.category.toLowerCase().includes(tab) ||
@@ -198,7 +206,7 @@ const Index = () => {
           ))}
         </div>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-          {(filteredProducts.length > 0 ? filteredProducts : products)
+          {(filteredProducts.length > 0 ? filteredProducts : allProducts)
             .slice(0, 10)
             .map((product) => (
               <ProductCard key={product.id} product={product} />
