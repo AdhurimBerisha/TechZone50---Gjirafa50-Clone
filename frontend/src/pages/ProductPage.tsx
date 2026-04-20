@@ -1,6 +1,5 @@
 import { useParams, Link } from "react-router";
 import { useEffect, useState } from "react";
-import { products } from "@/data/products";
 import ProductCard from "@/components/ProductCard";
 import { useCartStore } from "@/stores/cartStore";
 import { useWishlistStore } from "@/stores/wishlistStore";
@@ -23,25 +22,19 @@ import {
 } from "lucide-react";
 
 const ProductPage = () => {
-  const { slug } = useParams();
-  const {
-    products: fetchedProducts,
-    isLoading,
-    fetchAllProducts,
-  } = useProductStore();
+  const { id } = useParams();
+  const product = useProductStore((s) => (id ? s.getProductById(id) : undefined));
+  const isLoading = useProductStore((s) => s.isLoading);
+  const fetchProductById = useProductStore((s) => s.fetchProductById);
+  const allProducts = useProductStore((s) => s.products);
   const [quantity, setQuantity] = useState(1);
   const [installmentMonths, setInstallmentMonths] = useState(36);
   const addItem = useCartStore((s) => s.addItem);
   const { isInWishlist, toggleItem } = useWishlistStore();
 
   useEffect(() => {
-    if (fetchedProducts.length === 0) {
-      void fetchAllProducts();
-    }
-  }, [fetchAllProducts, fetchedProducts.length]);
-
-  const allProducts = fetchedProducts.length > 0 ? fetchedProducts : products;
-  const product = allProducts.find((p) => p.slug === slug);
+    if (id) void fetchProductById(id);
+  }, [fetchProductById, id]);
 
   if (!product && isLoading) {
     return (

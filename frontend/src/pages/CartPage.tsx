@@ -38,7 +38,7 @@ const CartPage = () => {
                 className={`flex items-center gap-4 p-4 ${i > 0 ? "border-t border-border" : ""}`}
               >
                 <Link
-                  to={`/product/${item.product.slug}`}
+                  to={`/product/${item.product.id}`}
                   className="w-20 h-20 flex-shrink-0"
                 >
                   <img
@@ -49,7 +49,7 @@ const CartPage = () => {
                 </Link>
                 <div className="flex-1 min-w-0">
                   <Link
-                    to={`/product/${item.product.slug}`}
+                    to={`/product/${item.product.id}`}
                     className="text-sm font-medium text-foreground hover:text-primary line-clamp-2"
                   >
                     {item.product.name}

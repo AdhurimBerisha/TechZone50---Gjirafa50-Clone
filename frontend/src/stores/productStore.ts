@@ -48,19 +48,26 @@ type GetAllProductsResponse =
 
 interface ProductState {
   products: UiProduct[];
+  currentProduct: UiProduct | null;
   isLoading: boolean;
   error: string | null;
 
   fetchAllProducts: () => Promise<void>;
+  fetchProductById: (id: string) => Promise<void>;
+  getProductById: (id: string) => UiProduct | undefined;
   reset: () => void;
 }
 
-export const useProductStore = create<ProductState>()((set) => ({
+export const useProductStore = create<ProductState>()((set, get) => ({
   products: [],
+  currentProduct: null,
   isLoading: false,
   error: null,
 
-  reset: () => set({ products: [], isLoading: false, error: null }),
+  reset: () =>
+    set({ products: [], currentProduct: null, isLoading: false, error: null }),
+
+  getProductById: (id) => get().products.find((p) => p.id === id),
 
   fetchAllProducts: async () => {
     try {
@@ -74,6 +81,7 @@ export const useProductStore = create<ProductState>()((set) => ({
 
       set({
         products: [],
+        currentProduct: null,
         isLoading: false,
         error: ("error" in res.data && res.data.error) || "Failed to fetch products",
       });
@@ -82,8 +90,54 @@ export const useProductStore = create<ProductState>()((set) => ({
       const axiosError = error as AxiosError<{ error?: string }>;
       set({
         products: [],
+        currentProduct: null,
         isLoading: false,
         error: axiosError.response?.data?.error ?? "Failed to fetch products",
+      });
+    }
+  },
+
+  fetchProductById: async (id: string) => {
+    try {
+      set({ error: null });
+
+      const cached = get().products.find((p) => p.id === id);
+      if (cached) {
+        set({ currentProduct: cached });
+        return;
+      }
+
+      set({ isLoading: true });
+      const res = await api.get<
+        | { success: true; product: BackendProduct }
+        | { success?: false; error?: string }
+      >(`/api/products/id/${encodeURIComponent(id)}`);
+
+      if ("success" in res.data && res.data.success === true) {
+        const ui = toUiProduct(res.data.product);
+        set((state) => ({
+          currentProduct: ui,
+          isLoading: false,
+          products: state.products.some((p) => p.id === ui.id)
+            ? state.products
+            : [...state.products, ui],
+        }));
+        return;
+      }
+
+      set({
+        currentProduct: null,
+        isLoading: false,
+        error:
+          ("error" in res.data && res.data.error) || "Failed to fetch product",
+      });
+    } catch (error) {
+      console.error("Error fetching product:", error);
+      const axiosError = error as AxiosError<{ error?: string }>;
+      set({
+        currentProduct: null,
+        isLoading: false,
+        error: axiosError.response?.data?.error ?? "Failed to fetch product",
       });
     }
   },
