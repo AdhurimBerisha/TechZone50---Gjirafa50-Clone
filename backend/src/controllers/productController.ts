@@ -12,4 +12,25 @@ const getProducts = async (req: Request, res: Response) => {
   }
 };
 
-export { getProducts };
+const getProductById = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    if (!id || typeof id !== "string") {
+      return res.status(400).json({ error: "Invalid product ID" });
+    }
+
+    const product = await prisma.product.findUnique({ where: { id } });
+
+    if (!product) {
+      return res.status(404).json({ error: "Product not found" });
+    }
+
+    return res.status(200).json(product);
+  } catch (error) {
+    console.error("Error fetching product:", error);
+    return res.status(500).json({ error: "Failed to fetch product" });
+  }
+};
+
+export { getProducts, getProductById };
