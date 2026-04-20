@@ -6,6 +6,7 @@ import cors from "cors";
 import { clerkMiddleware } from "@clerk/express";
 import userRoutes from "./routes/userRoutes";
 import adminRoutes from "./routes/adminRoutes";
+import productRoutes from "./routes/productRoutes";
 
 async function verifyDatabase(): Promise<void> {
   const databaseUrl = process.env.DATABASE_URL;
@@ -46,6 +47,7 @@ async function start(): Promise<void> {
 
   app.use("/api/users", userRoutes);
   app.use("/api/admin", adminRoutes);
+  app.use("/api/products", productRoutes);
 
   const PORT = process.env.PORT || 5000;
 
