@@ -255,6 +255,49 @@ const orderProduct = async (req: Request, res: Response) => {
   }
 };
 
+const addToWishList = async (req: Request, res: Response) => {
+  try {
+    const clerkId = getClerkUserId(req);
+    const { productId } = req.body;
+
+    if (!clerkId || !productId) {
+      return res
+        .status(400)
+        .json({ error: "clerkId and productId are required" });
+    }
+
+    const product = await prisma.product.findUnique({
+      where: { id: productId },
+    });
+
+    if (!product) {
+      return res.status(404).json({ error: "Product not found" });
+    }
+
+    const user = await prisma.user.findUnique({ where: { clerkId } });
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const wishListItem = await prisma.wishlistItem.create({
+      data: {
+        userId: user.id,
+        productId: product.id,
+      },
+      include: {
+        product: true,
+        user: true,
+      },
+    });
+
+    return res.status(200).json({ success: true, wishListItem });
+  } catch (error) {
+    console.error("Error adding to wishlist:", error);
+    return res.status(500).json({ error: "Failed to add to wishlist" });
+  }
+};
+
 export {
   syncUser,
   updateProfile,
@@ -263,4 +306,5 @@ export {
   getUserById,
   getCurrentUser,
   orderProduct,
+  addToWishList,
 };

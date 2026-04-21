@@ -81,6 +81,8 @@ model Product {
   isActive     Boolean   @default(true)
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
+
+  wishlistItems WishlistItem[]
 }
 
 model Order {
@@ -112,6 +114,7 @@ model WishlistItem {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   
   productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
   
   createdAt DateTime @default(now())
   
