@@ -1,10 +1,37 @@
+import { useEffect } from "react";
 import { Link } from "react-router";
+import { useAuth } from "@clerk/react";
+import { toast } from "sonner";
 import { useCartStore } from "@/stores/cartStore";
 import { Minus, Plus, Trash2, ShoppingCart } from "lucide-react";
 
 const CartPage = () => {
-  const { items, removeItem, updateQuantity, clearCart, totalPrice } =
-    useCartStore();
+  const {
+    items,
+    removeItem,
+    updateQuantity,
+    clearCart,
+    totalPrice,
+    fetchCartFromServer,
+    updateCartItemServer,
+    removeCartLineServer,
+    clearCartServer,
+  } = useCartStore();
+  const { isSignedIn, getToken, isLoaded } = useAuth();
+
+  useEffect(() => {
+    if (!isLoaded || isSignedIn !== true) return;
+    void (async () => {
+      try {
+        const token = await getToken();
+        if (token) {
+          await fetchCartFromServer(token);
+        }
+      } catch {
+        /* errors shown on interaction */
+      }
+    })();
+  }, [isLoaded, isSignedIn, getToken, fetchCartFromServer]);
 
   if (items.length === 0) {
     return (
@@ -29,7 +56,6 @@ const CartPage = () => {
       <h1 className="text-2xl font-semibold mb-6">Shporta ime</h1>
 
       <div className="flex flex-col lg:flex-row gap-6">
-        {/* Cart Items */}
         <div className="flex-1">
           <div className="bg-white rounded-lg border border-border overflow-hidden">
             {items.map((item, i) => (
@@ -60,18 +86,68 @@ const CartPage = () => {
                 </div>
                 <div className="flex items-center border border-border rounded-lg">
                   <button
-                    onClick={() =>
-                      updateQuantity(item.product.id, item.quantity - 1)
-                    }
+                    type="button"
+                    onClick={() => {
+                      const next = item.quantity - 1;
+                      void (async () => {
+                        try {
+                          if (isSignedIn === true) {
+                            const token = await getToken();
+                            if (!token) {
+                              toast.error("Sesioni skadoi.");
+                              return;
+                            }
+                            await updateCartItemServer(
+                              token,
+                              item.product.id,
+                              next,
+                            );
+                          } else {
+                            updateQuantity(item.product.id, next);
+                          }
+                        } catch (e) {
+                          toast.error(
+                            e instanceof Error
+                              ? e.message
+                              : "Gabim në shportë",
+                          );
+                        }
+                      })();
+                    }}
                     className="p-1.5 hover:bg-muted"
                   >
                     <Minus className="h-3 w-3" />
                   </button>
                   <span className="px-3 text-sm">{item.quantity}</span>
                   <button
-                    onClick={() =>
-                      updateQuantity(item.product.id, item.quantity + 1)
-                    }
+                    type="button"
+                    onClick={() => {
+                      const next = item.quantity + 1;
+                      void (async () => {
+                        try {
+                          if (isSignedIn === true) {
+                            const token = await getToken();
+                            if (!token) {
+                              toast.error("Sesioni skadoi.");
+                              return;
+                            }
+                            await updateCartItemServer(
+                              token,
+                              item.product.id,
+                              next,
+                            );
+                          } else {
+                            updateQuantity(item.product.id, next);
+                          }
+                        } catch (e) {
+                          toast.error(
+                            e instanceof Error
+                              ? e.message
+                              : "Gabim në shportë",
+                          );
+                        }
+                      })();
+                    }}
                     className="p-1.5 hover:bg-muted"
                   >
                     <Plus className="h-3 w-3" />
@@ -81,7 +157,29 @@ const CartPage = () => {
                   {(item.product.price * item.quantity).toFixed(2)}€
                 </span>
                 <button
-                  onClick={() => removeItem(item.product.id)}
+                  type="button"
+                  onClick={() => {
+                    void (async () => {
+                      try {
+                        if (isSignedIn === true) {
+                          const token = await getToken();
+                          if (!token) {
+                            toast.error("Sesioni skadoi.");
+                            return;
+                          }
+                          await removeCartLineServer(token, item.product.id);
+                        } else {
+                          removeItem(item.product.id);
+                        }
+                      } catch (e) {
+                        toast.error(
+                          e instanceof Error
+                            ? e.message
+                            : "Gabim në shportë",
+                        );
+                      }
+                    })();
+                  }}
                   className="text-muted-foreground hover:text-destructive"
                 >
                   <Trash2 className="h-4 w-4" />
@@ -90,14 +188,33 @@ const CartPage = () => {
             ))}
           </div>
           <button
-            onClick={clearCart}
+            type="button"
+            onClick={() => {
+              void (async () => {
+                try {
+                  if (isSignedIn === true) {
+                    const token = await getToken();
+                    if (!token) {
+                      toast.error("Sesioni skadoi.");
+                      return;
+                    }
+                    await clearCartServer(token);
+                  } else {
+                    clearCart();
+                  }
+                } catch (e) {
+                  toast.error(
+                    e instanceof Error ? e.message : "Gabim në shportë",
+                  );
+                }
+              })();
+            }}
             className="mt-3 text-sm text-muted-foreground hover:text-destructive"
           >
             Pastro shportën
           </button>
         </div>
 
-        {/* Summary */}
         <div className="w-full lg:w-[340px]">
           <div className="bg-white rounded-lg border border-border p-6 sticky top-4">
             <h2 className="font-semibold text-lg mb-4">Përmbledhja</h2>

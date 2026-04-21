@@ -32,8 +32,9 @@ const ProductPage = () => {
   const allProducts = useProductStore((s) => s.products);
   const [quantity, setQuantity] = useState(1);
   const [installmentMonths, setInstallmentMonths] = useState(36);
-  const addItem = useCartStore((s) => s.addItem);
-  const { isInWishlist, toggleItem } = useWishlistStore();
+  const addToCart = useCartStore((s) => s.addToCart);
+  const addToCartServer = useCartStore((s) => s.addToCartServer);
+  const { isInWishlist, syncToggleWishlist } = useWishlistStore();
   const { getToken, isSignedIn } = useAuth();
   const orderProduct = useOrderStore((s) => s.orderProduct);
   const isOrdering = useOrderStore((s) => s.isOrdering);
@@ -71,7 +72,23 @@ const ProductPage = () => {
   const installmentAmount = product.price / installmentMonths;
 
   const handleAddToCart = () => {
-    for (let i = 0; i < quantity; i++) addItem(product);
+    void (async () => {
+      try {
+        if (isSignedIn === true) {
+          const token = await getToken();
+          if (!token) {
+            toast.error("Sesioni skadoi. Hyni përsëri.");
+            return;
+          }
+          await addToCartServer(token, product.id, quantity);
+        } else {
+          addToCart(product, quantity);
+        }
+        toast.success("Shtua në shportë");
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : "Gabim në shportë");
+      }
+    })();
   };
 
   const handleBuyNow = async () => {
@@ -97,6 +114,18 @@ const ProductPage = () => {
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Porosia dështoi.");
     }
+  };
+
+  const handleWishlistToggle = () => {
+    void (async () => {
+      try {
+        await syncToggleWishlist(product, { isSignedIn, getToken });
+      } catch (e) {
+        toast.error(
+          e instanceof Error ? e.message : "Gabim në listën e dëshirave",
+        );
+      }
+    })();
   };
 
   return (
@@ -254,7 +283,8 @@ const ProductPage = () => {
               </Button>
 
               <button
-                onClick={() => toggleItem(product)}
+                type="button"
+                onClick={handleWishlistToggle}
                 className={`p-3 rounded-lg border transition-colors ${wishlisted ? "border-red-500 text-red-500" : "border-border text-muted-foreground hover:text-primary"}`}
               >
                 <Heart

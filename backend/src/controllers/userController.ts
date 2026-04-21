@@ -280,21 +280,59 @@ const addToWishList = async (req: Request, res: Response) => {
       return res.status(404).json({ error: "User not found" });
     }
 
-    const wishListItem = await prisma.wishlistItem.create({
-      data: {
-        userId: user.id,
-        productId: product.id,
+    const existing = await prisma.wishlistItem.findUnique({
+      where: {
+        userId_productId: { userId: user.id, productId: product.id },
       },
-      include: {
-        product: true,
-        user: true,
-      },
+      include: { product: true, user: true },
     });
+
+    const wishListItem =
+      existing ??
+      (await prisma.wishlistItem.create({
+        data: {
+          userId: user.id,
+          productId: product.id,
+        },
+        include: {
+          product: true,
+          user: true,
+        },
+      }));
 
     return res.status(200).json({ success: true, wishListItem });
   } catch (error) {
     console.error("Error adding to wishlist:", error);
     return res.status(500).json({ error: "Failed to add to wishlist" });
+  }
+};
+
+const fetchWishlist = async (req: Request, res: Response) => {
+  try {
+    const clerkId = getClerkUserId(req);
+    if (!clerkId) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { clerkId },
+      select: { id: true },
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const wishlistItems = await prisma.wishlistItem.findMany({
+      where: { userId: user.id },
+      include: { product: true },
+      orderBy: { createdAt: "desc" },
+    });
+
+    return res.status(200).json({ success: true, wishlistItems });
+  } catch (error) {
+    console.error("Error fetching wishlist:", error);
+    return res.status(500).json({ error: "Failed to fetch wishlist" });
   }
 };
 
@@ -309,15 +347,21 @@ const removeFromWishList = async (req: Request, res: Response) => {
         .json({ error: "clerkId and productId are required" });
     }
 
-    const wishListItem = await prisma.wishlistItem.delete({
-      where: {
-        userId_productId: {
-          userId: clerkId,
-          productId,
-        },
-      },
+    const user = await prisma.user.findUnique({ where: { clerkId } });
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const removed = await prisma.wishlistItem.deleteMany({
+      where: { userId: user.id, productId },
     });
-    return res.status(200).json({ success: true, wishListItem });
+
+    if (removed.count === 0) {
+      return res.status(404).json({ error: "Wishlist item not found" });
+    }
+
+    return res.status(200).json({ success: true });
   } catch (error) {
     console.error("Error removing from wishlist:", error);
     return res.status(500).json({ error: "Failed to remove from wishlist" });
@@ -367,6 +411,214 @@ const fetchOrders = async (req: Request, res: Response) => {
   }
 };
 
+const fetchCart = async (req: Request, res: Response) => {
+  try {
+    const clerkId = getClerkUserId(req);
+    if (!clerkId) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { clerkId },
+      select: { id: true },
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const items = await prisma.cartItem.findMany({
+      where: { userId: user.id },
+      include: { product: true },
+      orderBy: { updatedAt: "desc" },
+    });
+
+    return res.status(200).json({ success: true, items });
+  } catch (error) {
+    console.error("Error fetching cart:", error);
+    return res.status(500).json({ error: "Failed to fetch cart" });
+  }
+};
+
+const addToCart = async (req: Request, res: Response) => {
+  try {
+    const clerkId = getClerkUserId(req);
+    const { productId, quantity } = req.body as {
+      productId?: string;
+      quantity?: number;
+    };
+
+    if (!clerkId || !productId) {
+      return res.status(400).json({ error: "productId is required" });
+    }
+
+    const qty = typeof quantity === "number" ? Math.floor(quantity) : 1;
+    if (!Number.isFinite(qty) || qty < 1) {
+      return res.status(400).json({ error: "quantity must be a positive integer" });
+    }
+
+    const product = await prisma.product.findUnique({
+      where: { id: productId },
+    });
+
+    if (!product) {
+      return res.status(404).json({ error: "Product not found" });
+    }
+
+    if (!product.isActive) {
+      return res.status(400).json({ error: "Product is not available" });
+    }
+
+    const user = await prisma.user.findUnique({ where: { clerkId } });
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const existing = await prisma.cartItem.findUnique({
+      where: {
+        userId_productId: { userId: user.id, productId: product.id },
+      },
+    });
+
+    const nextQty = (existing?.quantity ?? 0) + qty;
+    if (nextQty > product.stock) {
+      return res.status(400).json({ error: "Not enough stock" });
+    }
+
+    if (existing) {
+      await prisma.cartItem.update({
+        where: { id: existing.id },
+        data: { quantity: nextQty },
+      });
+    } else {
+      await prisma.cartItem.create({
+        data: {
+          userId: user.id,
+          productId: product.id,
+          quantity: qty,
+        },
+      });
+    }
+
+    const cartItem = await prisma.cartItem.findUnique({
+      where: {
+        userId_productId: { userId: user.id, productId: product.id },
+      },
+      include: { product: true },
+    });
+
+    return res.status(200).json({ success: true, cartItem });
+  } catch (error) {
+    console.error("Error adding to cart:", error);
+    return res.status(500).json({ error: "Failed to add to cart" });
+  }
+};
+
+const updateCartItem = async (req: Request, res: Response) => {
+  try {
+    const clerkId = getClerkUserId(req);
+    const { productId, quantity } = req.body as {
+      productId?: string;
+      quantity?: number;
+    };
+
+    if (!clerkId || !productId) {
+      return res.status(400).json({ error: "productId is required" });
+    }
+
+    const qty = typeof quantity === "number" ? Math.floor(quantity) : 0;
+    if (!Number.isFinite(qty)) {
+      return res.status(400).json({ error: "quantity must be a number" });
+    }
+
+    const user = await prisma.user.findUnique({ where: { clerkId } });
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    if (qty <= 0) {
+      await prisma.cartItem.deleteMany({
+        where: { userId: user.id, productId },
+      });
+      return res.status(200).json({ success: true });
+    }
+
+    const product = await prisma.product.findUnique({
+      where: { id: productId },
+    });
+
+    if (!product) {
+      return res.status(404).json({ error: "Product not found" });
+    }
+
+    if (qty > product.stock) {
+      return res.status(400).json({ error: "Not enough stock" });
+    }
+
+    const existing = await prisma.cartItem.findUnique({
+      where: {
+        userId_productId: { userId: user.id, productId: product.id },
+      },
+    });
+
+    if (!existing) {
+      return res.status(404).json({ error: "Cart item not found" });
+    }
+
+    await prisma.cartItem.update({
+      where: { id: existing.id },
+      data: { quantity: qty },
+    });
+
+    const cartItem = await prisma.cartItem.findUnique({
+      where: { id: existing.id },
+      include: { product: true },
+    });
+
+    return res.status(200).json({ success: true, cartItem });
+  } catch (error) {
+    console.error("Error updating cart item:", error);
+    return res.status(500).json({ error: "Failed to update cart item" });
+  }
+};
+
+const removeFromCart = async (req: Request, res: Response) => {
+  try {
+    const clerkId = getClerkUserId(req);
+    const { productId } = req.body as { productId?: string };
+
+    if (!clerkId) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const user = await prisma.user.findUnique({ where: { clerkId } });
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    if (productId === undefined || productId === null || productId === "") {
+      await prisma.cartItem.deleteMany({ where: { userId: user.id } });
+      return res.status(200).json({ success: true, clearedAll: true });
+    }
+
+    const removed = await prisma.cartItem.deleteMany({
+      where: { userId: user.id, productId },
+    });
+
+    if (removed.count === 0) {
+      return res.status(404).json({ error: "Cart item not found" });
+    }
+
+    return res.status(200).json({ success: true });
+  } catch (error) {
+    console.error("Error removing from cart:", error);
+    return res.status(500).json({ error: "Failed to remove from cart" });
+  }
+};
+
 export {
   syncUser,
   updateProfile,
@@ -377,5 +629,10 @@ export {
   orderProduct,
   addToWishList,
   removeFromWishList,
+  fetchWishlist,
   fetchOrders,
+  fetchCart,
+  addToCart,
+  updateCartItem,
+  removeFromCart,
 };

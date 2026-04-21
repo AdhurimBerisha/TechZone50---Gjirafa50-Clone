@@ -1,13 +1,29 @@
 import { Link } from "react-router";
+import { useAuth } from "@clerk/react";
+import { toast } from "sonner";
 import { Heart, ShoppingCart, Star, Truck } from "lucide-react";
 import type { Product } from "@/data/products";
 import { useCartStore } from "@/stores/cartStore";
 import { useWishlistStore } from "@/stores/wishlistStore";
 
 const ProductCard = ({ product }: { product: Product }) => {
-  const addItem = useCartStore((s) => s.addItem);
-  const { isInWishlist, toggleItem } = useWishlistStore();
+  const addToCart = useCartStore((s) => s.addToCart);
+  const addToCartServer = useCartStore((s) => s.addToCartServer);
+  const { isInWishlist, syncToggleWishlist } = useWishlistStore();
+  const { isSignedIn, getToken } = useAuth();
   const wishlisted = isInWishlist(product.id);
+
+  const handleWishlistClick = () => {
+    void (async () => {
+      try {
+        await syncToggleWishlist(product, { isSignedIn, getToken });
+      } catch (e) {
+        toast.error(
+          e instanceof Error ? e.message : "Gabim në listën e dëshirave",
+        );
+      }
+    })();
+  };
 
   return (
     <div className="bg-white rounded-lg border border-border overflow-hidden group hover:shadow-lg transition-shadow relative">
@@ -34,7 +50,8 @@ const ProductCard = ({ product }: { product: Product }) => {
 
       {/* Wishlist */}
       <button
-        onClick={() => toggleItem(product)}
+        type="button"
+        onClick={handleWishlistClick}
         className="absolute top-2 right-2 z-20 p-1.5 rounded-full bg-white/80 hover:bg-white transition-colors"
         style={{ right: product.oldPrice ? "50px" : "8px" }}
       >
@@ -96,7 +113,28 @@ const ProductCard = ({ product }: { product: Product }) => {
 
         {/* Add to cart */}
         <button
-          onClick={() => addItem(product)}
+          type="button"
+          onClick={() => {
+            void (async () => {
+              try {
+                if (isSignedIn === true) {
+                  const token = await getToken();
+                  if (!token) {
+                    toast.error("Sesioni skadoi. Hyni përsëri.");
+                    return;
+                  }
+                  await addToCartServer(token, product.id, 1);
+                } else {
+                  addToCart(product, 1);
+                }
+                toast.success("Shtua në shportë");
+              } catch (e) {
+                toast.error(
+                  e instanceof Error ? e.message : "Gabim në shportë",
+                );
+              }
+            })();
+          }}
           className="mt-3 w-full flex items-center justify-center gap-2 bg-orange-600 text-primary-foreground rounded-lg py-2 text-sm font-medium hover:bg-primary/90 transition-colors"
         >
           <ShoppingCart className="h-4 w-4" />

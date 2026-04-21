@@ -3,6 +3,8 @@ import { Link, NavLink, useLocation, useNavigate } from "react-router";
 import { useAuth, useUser } from "@clerk/react";
 import { User, Package, Heart, LogOut, Save, Loader2 } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
+import { useWishlistStore } from "@/stores/wishlistStore";
+import { useCartStore } from "@/stores/cartStore";
 import { ProfileOrders } from "@/components/account/ProfileOrders";
 
 const navLinkClass = ({ isActive }: { isActive: boolean }) =>
@@ -71,6 +73,8 @@ const AccountPage = () => {
 
   const handleLogout = async () => {
     await signOut();
+    useWishlistStore.getState().clearWishlist();
+    useCartStore.getState().clearCart();
     navigate("/");
   };
 
