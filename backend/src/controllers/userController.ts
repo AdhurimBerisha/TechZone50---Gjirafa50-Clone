@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import type { Prisma } from "../generated/prisma/client";
+import { OrderStatus, type Prisma } from "../generated/prisma/client";
 import { prisma } from "../lib/prisma";
 import { getClerkUserId } from "../middleware/authMiddleware";
 
@@ -185,6 +185,77 @@ const getCurrentUser = async (req: Request, res: Response) => {
   }
 };
 
+const orderProduct = async (req: Request, res: Response) => {
+  try {
+    const clerkId = getClerkUserId(req);
+    const { productId, quantity } = req.body;
+
+    if (!clerkId || !productId || !quantity || quantity <= 0) {
+      return res.status(400).json({ error: "Invalid input" });
+    }
+
+    const product = await prisma.product.findUnique({
+      where: { id: productId },
+    });
+
+    if (!product) {
+      return res.status(404).json({ error: "Product not found" });
+    }
+
+    if (product.stock < quantity) {
+      return res.status(400).json({ error: "Not enough stock" });
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { clerkId },
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const order = await prisma.$transaction(async (tx) => {
+      const newOrder = await tx.order.create({
+        data: {
+          userId: user.id,
+          total: product.price * quantity,
+          status: OrderStatus.PENDING,
+        },
+      });
+
+      await tx.orderItem.create({
+        data: {
+          orderId: newOrder.id,
+          productId: product.id,
+          quantity,
+          price: product.price,
+        },
+      });
+
+      await tx.product.update({
+        where: { id: product.id },
+        data: {
+          stock: {
+            decrement: quantity,
+          },
+        },
+      });
+
+      return newOrder;
+    });
+
+    const fullOrder = await prisma.order.findUnique({
+      where: { id: order.id },
+      include: { items: true },
+    });
+
+    return res.status(200).json({ success: true, order: fullOrder });
+  } catch (error) {
+    console.error("Error ordering product:", error);
+    return res.status(500).json({ error: "Failed to order product" });
+  }
+};
+
 export {
   syncUser,
   updateProfile,
@@ -192,4 +263,5 @@ export {
   deleteUser,
   getUserById,
   getCurrentUser,
+  orderProduct,
 };
