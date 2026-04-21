@@ -1,10 +1,28 @@
+import { useEffect } from "react";
 import { Link } from "react-router";
+import { useAuth } from "@clerk/react";
 import { useWishlistStore } from "@/stores/wishlistStore";
 import ProductCard from "@/components/ProductCard";
 import { Heart } from "lucide-react";
 
 const WishlistPage = () => {
   const { items } = useWishlistStore();
+  const fetchWishlist = useWishlistStore((s) => s.fetchWishlist);
+  const { isSignedIn, getToken, isLoaded } = useAuth();
+
+  useEffect(() => {
+    if (!isLoaded || isSignedIn !== true) return;
+    void (async () => {
+      try {
+        const token = await getToken();
+        if (token) {
+          await fetchWishlist(token);
+        }
+      } catch {
+        /* errors shown when toggling wishlist */
+      }
+    })();
+  }, [isLoaded, isSignedIn, getToken, fetchWishlist]);
 
   if (items.length === 0) {
     return (
