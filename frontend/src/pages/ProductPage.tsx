@@ -33,7 +33,7 @@ const ProductPage = () => {
   const [quantity, setQuantity] = useState(1);
   const [installmentMonths, setInstallmentMonths] = useState(36);
   const addItem = useCartStore((s) => s.addItem);
-  const { isInWishlist, toggleItem } = useWishlistStore();
+  const { isInWishlist, syncToggleWishlist } = useWishlistStore();
   const { getToken, isSignedIn } = useAuth();
   const orderProduct = useOrderStore((s) => s.orderProduct);
   const isOrdering = useOrderStore((s) => s.isOrdering);
@@ -97,6 +97,18 @@ const ProductPage = () => {
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Porosia dështoi.");
     }
+  };
+
+  const handleWishlistToggle = () => {
+    void (async () => {
+      try {
+        await syncToggleWishlist(product, { isSignedIn, getToken });
+      } catch (e) {
+        toast.error(
+          e instanceof Error ? e.message : "Gabim në listën e dëshirave",
+        );
+      }
+    })();
   };
 
   return (
@@ -254,7 +266,8 @@ const ProductPage = () => {
               </Button>
 
               <button
-                onClick={() => toggleItem(product)}
+                type="button"
+                onClick={handleWishlistToggle}
                 className={`p-3 rounded-lg border transition-colors ${wishlisted ? "border-red-500 text-red-500" : "border-border text-muted-foreground hover:text-primary"}`}
               >
                 <Heart
