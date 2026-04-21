@@ -298,6 +298,32 @@ const addToWishList = async (req: Request, res: Response) => {
   }
 };
 
+const removeFromWishList = async (req: Request, res: Response) => {
+  try {
+    const clerkId = getClerkUserId(req);
+    const { productId } = req.body;
+
+    if (!clerkId || !productId) {
+      return res
+        .status(400)
+        .json({ error: "clerkId and productId are required" });
+    }
+
+    const wishListItem = await prisma.wishlistItem.delete({
+      where: {
+        userId_productId: {
+          userId: clerkId,
+          productId,
+        },
+      },
+    });
+    return res.status(200).json({ success: true, wishListItem });
+  } catch (error) {
+    console.error("Error removing from wishlist:", error);
+    return res.status(500).json({ error: "Failed to remove from wishlist" });
+  }
+};
+
 export {
   syncUser,
   updateProfile,
@@ -307,4 +333,5 @@ export {
   getCurrentUser,
   orderProduct,
   addToWishList,
+  removeFromWishList,
 };

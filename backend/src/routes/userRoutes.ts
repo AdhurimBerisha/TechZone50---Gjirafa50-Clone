@@ -8,6 +8,7 @@ import {
   getCurrentUser,
   orderProduct,
   addToWishList,
+  removeFromWishList,
 } from "../controllers/userController";
 import { requireClerkAuth } from "../middleware/authMiddleware";
 
@@ -21,5 +22,6 @@ router.put("/:id", requireClerkAuth, updateUser);
 router.delete("/:id", deleteUser);
 router.post("/order", requireClerkAuth, orderProduct);
 router.post("/wishlist", requireClerkAuth, addToWishList);
+router.delete("/wishlist", requireClerkAuth, removeFromWishList);
 
 export default router;
