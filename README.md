@@ -1,4 +1,4 @@
-# TechZone50 — Gjirafa50 Clone — Modern E-Commerce Experience
+# TechZone50 - Gjirafa50 Clone - Modern E-Commerce Experience
 
 Gjirafa50 Clone is a full-stack e-commerce web application inspired by the Gjirafa50 platform. It delivers a modern online shopping experience with product browsing, secure payments, user authentication, and an intuitive admin dashboard for managing products and orders.
 Built with a scalable architecture, this project demonstrates real-world e-commerce functionality using modern web technologies.
