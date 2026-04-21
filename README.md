@@ -62,6 +62,14 @@ This project requires a few environment variables to run properly.
 - For the **backend**, create a `.env` file.  
 - For the **frontend**, create a `.env` file.
 
+### backend `.env` variables include:
+- `DATABASE_URL` — your_database_url
+- `CLERK_PUBLISHABLE_KEY` — your_clerk_publishable_key
+- `CLERK_SECRET_KEY` — your_clerk_secret_key
+
+
+### frontend `.env` variables include:
+- `VITE_CLERK_PUBLISHABLE_KEY` — your_clerk_publishable_key
 
 
 4. Run the development servers
