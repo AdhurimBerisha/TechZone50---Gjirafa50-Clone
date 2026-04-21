@@ -3,6 +3,7 @@ import { useAuth, useUser } from "@clerk/react";
 import { AxiosError } from "axios";
 import { api } from "../lib/api";
 import { useAuthStore } from "../stores/authStore";
+import { useWishlistStore } from "../stores/wishlistStore";
 
 const UserSync = ({ children }: { children: React.ReactNode }) => {
   const { user, isSignedIn } = useUser();
@@ -40,6 +41,12 @@ const UserSync = ({ children }: { children: React.ReactNode }) => {
           });
 
           setCurrentUser(me.data.user);
+
+          try {
+            await useWishlistStore.getState().fetchWishlist(token);
+          } catch (wishlistErr) {
+            console.error("Failed to load wishlist:", wishlistErr);
+          }
         } catch (error) {
           console.error("Failed to sync user:", error);
           const axiosError = error as AxiosError<{ error?: string }>;

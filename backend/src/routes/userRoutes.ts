@@ -9,6 +9,7 @@ import {
   orderProduct,
   addToWishList,
   removeFromWishList,
+  fetchWishlist,
   fetchOrders,
 } from "../controllers/userController";
 import { requireClerkAuth } from "../middleware/authMiddleware";
@@ -19,11 +20,12 @@ router.post("/sync", requireClerkAuth, syncUser);
 router.put("/profile", requireClerkAuth, updateProfile);
 router.get("/me", requireClerkAuth, getCurrentUser);
 router.get("/orders", requireClerkAuth, fetchOrders);
+router.get("/wishlist", requireClerkAuth, fetchWishlist);
+router.post("/wishlist", requireClerkAuth, addToWishList);
+router.delete("/wishlist", requireClerkAuth, removeFromWishList);
 router.get("/:id", getUserById);
 router.put("/:id", requireClerkAuth, updateUser);
 router.delete("/:id", deleteUser);
 router.post("/order", requireClerkAuth, orderProduct);
-router.post("/wishlist", requireClerkAuth, addToWishList);
-router.delete("/wishlist", requireClerkAuth, removeFromWishList);
 
 export default router;
