@@ -1,9 +1,12 @@
 import { useParams, Link } from "react-router";
 import { useEffect, useState } from "react";
+import { useAuth } from "@clerk/react";
+import { toast } from "sonner";
 import ProductCard from "@/components/ProductCard";
 import { useCartStore } from "@/stores/cartStore";
 import { useWishlistStore } from "@/stores/wishlistStore";
 import { useProductStore } from "@/stores/productStore";
+import { useOrderStore } from "@/stores/orderStore";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -31,6 +34,9 @@ const ProductPage = () => {
   const [installmentMonths, setInstallmentMonths] = useState(36);
   const addItem = useCartStore((s) => s.addItem);
   const { isInWishlist, toggleItem } = useWishlistStore();
+  const { getToken, isSignedIn } = useAuth();
+  const orderProduct = useOrderStore((s) => s.orderProduct);
+  const isOrdering = useOrderStore((s) => s.isOrdering);
 
   useEffect(() => {
     if (id) void fetchProductById(id);
@@ -66,6 +72,31 @@ const ProductPage = () => {
 
   const handleAddToCart = () => {
     for (let i = 0; i < quantity; i++) addItem(product);
+  };
+
+  const handleBuyNow = async () => {
+    if (!isSignedIn) {
+      toast.error("Ju lutem hyni për të blerë.");
+      return;
+    }
+    if (!product.inStock) {
+      toast.error("Produkti nuk është në stok.");
+      return;
+    }
+    try {
+      const token = await getToken();
+      if (!token) {
+        toast.error("Sesioni skadoi. Hyni përsëri.");
+        return;
+      }
+      await orderProduct(token, product.id, quantity);
+      toast.success("Porosia u krijua me sukses.");
+      if (id) {
+        void fetchProductById(id);
+      }
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Porosia dështoi.");
+    }
   };
 
   return (
@@ -232,8 +263,13 @@ const ProductPage = () => {
               </button>
             </div>
 
-            <Button variant="outline" className="w-full">
-              Bler tani
+            <Button
+              variant="outline"
+              className="w-full"
+              disabled={isOrdering || !product.inStock}
+              onClick={() => void handleBuyNow()}
+            >
+              {isOrdering ? "Duke u procesuar..." : "Bler tani"}
             </Button>
           </div>
 
