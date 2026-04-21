@@ -324,6 +324,49 @@ const removeFromWishList = async (req: Request, res: Response) => {
   }
 };
 
+const fetchOrders = async (req: Request, res: Response) => {
+  try {
+    const clerkId = getClerkUserId(req);
+    if (!clerkId) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { clerkId },
+      select: { id: true },
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const orders = await prisma.order.findMany({
+      where: {
+        userId: user.id,
+        status: {
+          in: [
+            OrderStatus.PENDING,
+            OrderStatus.CONFIRMED,
+            OrderStatus.PROCESSING,
+            OrderStatus.SHIPPED,
+            OrderStatus.DELIVERED,
+          ],
+        },
+      },
+      include: {
+        items: true,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+    return res.status(200).json({ success: true, orders });
+  } catch (error) {
+    console.error("Error fetching orders:", error);
+    return res.status(500).json({ error: "Failed to fetch orders" });
+  }
+};
+
 export {
   syncUser,
   updateProfile,
@@ -334,4 +377,5 @@ export {
   orderProduct,
   addToWishList,
   removeFromWishList,
+  fetchOrders,
 };
