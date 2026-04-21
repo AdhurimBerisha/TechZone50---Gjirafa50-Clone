@@ -6,6 +6,7 @@ import {
   deleteUser,
   getUserById,
   getCurrentUser,
+  orderProduct,
 } from "../controllers/userController";
 import { requireClerkAuth } from "../middleware/authMiddleware";
 
@@ -17,5 +18,6 @@ router.get("/me", requireClerkAuth, getCurrentUser);
 router.get("/:id", getUserById);
 router.put("/:id", requireClerkAuth, updateUser);
 router.delete("/:id", deleteUser);
+router.post("/order", requireClerkAuth, orderProduct);
 
 export default router;
