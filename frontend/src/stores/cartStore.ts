@@ -259,9 +259,8 @@ export const useCartStore = create<CartState>()(
 
       clearCartServer: async (token) => {
         try {
-          const res = await api.delete<OkResponse>("/api/users/cart", {
+          const res = await api.delete<OkResponse>("/api/users/cart/clear", {
             headers: { Authorization: `Bearer ${token}` },
-            data: {},
           });
           if ("success" in res.data && res.data.success === true) {
             set({ items: [] });
