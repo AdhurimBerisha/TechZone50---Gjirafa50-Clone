@@ -15,6 +15,7 @@ import {
   addToCart,
   updateCartItem,
   removeFromCart,
+  clearCart,
 } from "../controllers/userController";
 import { requireClerkAuth } from "../middleware/authMiddleware";
 
@@ -35,5 +36,6 @@ router.delete("/cart", requireClerkAuth, removeFromCart);
 router.get("/:id", getUserById);
 router.put("/:id", requireClerkAuth, updateUser);
 router.delete("/:id", deleteUser);
+router.delete("/cart/clear", requireClerkAuth, clearCart);
 
 export default router;
