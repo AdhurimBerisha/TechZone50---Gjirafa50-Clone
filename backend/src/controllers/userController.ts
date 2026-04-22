@@ -454,7 +454,9 @@ const addToCart = async (req: Request, res: Response) => {
 
     const qty = typeof quantity === "number" ? Math.floor(quantity) : 1;
     if (!Number.isFinite(qty) || qty < 1) {
-      return res.status(400).json({ error: "quantity must be a positive integer" });
+      return res
+        .status(400)
+        .json({ error: "quantity must be a positive integer" });
     }
 
     const product = await prisma.product.findUnique({
@@ -619,6 +621,26 @@ const removeFromCart = async (req: Request, res: Response) => {
   }
 };
 
+const clearCart = async (req: Request, res: Response) => {
+  try {
+    const clerkId = getClerkUserId(req);
+    if (!clerkId) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const user = await prisma.user.findUnique({ where: { clerkId } });
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    await prisma.cartItem.deleteMany({ where: { userId: user.id } });
+    return res.status(200).json({ success: true });
+  } catch (error) {
+    console.error("Error clearing cart:", error);
+    return res.status(500).json({ error: "Failed to clear cart" });
+  }
+};
+
 export {
   syncUser,
   updateProfile,
@@ -635,4 +657,5 @@ export {
   addToCart,
   updateCartItem,
   removeFromCart,
+  clearCart,
 };
