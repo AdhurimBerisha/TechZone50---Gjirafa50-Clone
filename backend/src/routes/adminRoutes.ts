@@ -9,6 +9,7 @@ import {
   updateProduct,
   deleteProduct,
   toggleProductAvailability,
+  getAllOrders,
 } from "../controllers/adminController";
 
 const router = Router();
@@ -22,5 +23,6 @@ router.get("/orders", getAdminOrders);
 router.get("/settings", getAdminSettings);
 router.delete("/products/:id", deleteProduct);
 router.put("/products/:id/toggle", toggleProductAvailability);
+router.get("/orders", getAllOrders);
 
 export default router;

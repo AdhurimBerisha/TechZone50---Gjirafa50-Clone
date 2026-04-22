@@ -314,6 +314,24 @@ const toggleProductAvailability = async (req: Request, res: Response) => {
   }
 };
 
+const getAllOrders = async (req: Request, res: Response) => {
+  try {
+    const orders = await prisma.order.findMany({
+      include: {
+        items: true,
+        user: true,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+    return res.status(200).json({ success: true, orders });
+  } catch (error) {
+    console.error("Error fetching orders:", error);
+    return res.status(500).json({ error: "Failed to fetch orders" });
+  }
+};
+
 export {
   getAdminDashboard,
   getAllUsers,
@@ -324,4 +342,5 @@ export {
   updateProduct,
   deleteProduct,
   toggleProductAvailability,
+  getAllOrders,
 };
