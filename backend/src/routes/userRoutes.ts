@@ -33,9 +33,9 @@ router.get("/cart", requireClerkAuth, fetchCart);
 router.post("/cart", requireClerkAuth, addToCart);
 router.patch("/cart", requireClerkAuth, updateCartItem);
 router.delete("/cart", requireClerkAuth, removeFromCart);
-router.get("/:id", getUserById);
-router.put("/:id", requireClerkAuth, updateUser);
-router.delete("/:id", deleteUser);
+router.put("/me", requireClerkAuth, updateUser);
+router.delete("/me", requireClerkAuth, deleteUser);
 router.delete("/cart/clear", requireClerkAuth, clearCart);
+router.get("/:id", getUserById);
 
 export default router;
