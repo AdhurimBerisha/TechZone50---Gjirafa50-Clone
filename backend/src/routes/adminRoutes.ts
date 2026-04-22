@@ -8,6 +8,7 @@ import {
   createProduct,
   updateProduct,
   deleteProduct,
+  toggleProductAvailability,
 } from "../controllers/adminController";
 
 const router = Router();
@@ -20,5 +21,6 @@ router.put("/products/:id", updateProduct);
 router.get("/orders", getAdminOrders);
 router.get("/settings", getAdminSettings);
 router.delete("/products/:id", deleteProduct);
+router.put("/products/:id/toggle", toggleProductAvailability);
 
 export default router;

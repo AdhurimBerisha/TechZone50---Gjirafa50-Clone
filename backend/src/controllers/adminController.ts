@@ -284,6 +284,36 @@ const deleteProduct = async (req: Request, res: Response) => {
   }
 };
 
+const toggleProductAvailability = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const productId = Array.isArray(id) ? id[0] : (id as string);
+    if (!productId) {
+      return res.status(400).json({ error: "Product ID is required" });
+    }
+
+    const existingProduct = await prisma.product.findUnique({
+      where: { id: productId },
+    });
+
+    if (!existingProduct) {
+      return res.status(404).json({ error: "Product not found" });
+    }
+
+    const updatedProduct = await prisma.product.update({
+      where: { id: productId },
+      data: { isActive: !existingProduct.isActive },
+    });
+
+    return res.status(200).json({ success: true, product: updateProduct });
+  } catch (error) {
+    console.error("Toggle product availability error:", error);
+    return res
+      .status(500)
+      .json({ error: "Failed to toggle product availability" });
+  }
+};
+
 export {
   getAdminDashboard,
   getAllUsers,
@@ -293,4 +323,5 @@ export {
   createProduct,
   updateProduct,
   deleteProduct,
+  toggleProductAvailability,
 };
