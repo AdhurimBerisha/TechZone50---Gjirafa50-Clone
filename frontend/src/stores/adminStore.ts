@@ -75,9 +75,10 @@ export const useAdminStore = create<AdminStore>()(
             set({
               totalProducts: res.data.products.length,
               recentProducts: res.data.products,
+              isLoading: false,
             });
           } else {
-            set({ error: "Failed to fetch products" });
+            set({ error: "Failed to fetch products", isLoading: false });
           }
         } catch (error) {
           console.error("Error fetching products:", error);
@@ -85,6 +86,7 @@ export const useAdminStore = create<AdminStore>()(
           set({
             error:
               axiosError.response?.data?.error ?? "Failed to fetch products",
+            isLoading: false,
           });
         }
       },
@@ -98,15 +100,17 @@ export const useAdminStore = create<AdminStore>()(
             set({
               totalUsers: res.data.users.length,
               recentUsers: res.data.users,
+              isLoading: false,
             });
           } else {
-            set({ error: "Failed to fetch users" });
+            set({ error: "Failed to fetch users", isLoading: false });
           }
         } catch (error) {
           console.error("Error fetching users:", error);
           const axiosError = error as AxiosError<{ error?: string }>;
           set({
             error: axiosError.response?.data?.error ?? "Failed to fetch users",
+            isLoading: false,
           });
         }
       },
