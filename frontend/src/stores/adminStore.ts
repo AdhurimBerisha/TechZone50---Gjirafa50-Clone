@@ -14,8 +14,14 @@ interface AdminState {
   recentProducts: Product[];
   recentUsers: User[];
   recentRevenue: number[];
-  fetchAllProducts: () => Promise<void>;
 }
+
+interface AdminActions {
+  fetchAllProducts: () => Promise<void>;
+  fetchAllUsers: () => Promise<void>;
+}
+
+type AdminStore = AdminState & AdminActions;
 
 interface Order {
   id: string;
@@ -36,17 +42,13 @@ interface Product {
 
 interface User {
   id: string;
-  name: string;
   email: string;
-  phone: string;
-  address: string;
-  city: string;
-  state: string;
-  zip: string;
-  country: string;
+  name: string | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
-const initialState: Omit<AdminState, "fetchAllProducts"> = {
+const initialState: AdminState = {
   isLoading: false,
   error: null,
   totalProducts: 0,
@@ -59,7 +61,7 @@ const initialState: Omit<AdminState, "fetchAllProducts"> = {
   recentRevenue: [],
 };
 
-export const useAdminStore = create<AdminState>()(
+export const useAdminStore = create<AdminStore>()(
   persist(
     (set) => ({
       ...initialState,
@@ -73,10 +75,9 @@ export const useAdminStore = create<AdminState>()(
             set({
               totalProducts: res.data.products.length,
               recentProducts: res.data.products,
-              isLoading: false,
             });
           } else {
-            set({ error: "Failed to fetch products", isLoading: false });
+            set({ error: "Failed to fetch products" });
           }
         } catch (error) {
           console.error("Error fetching products:", error);
@@ -84,7 +85,28 @@ export const useAdminStore = create<AdminState>()(
           set({
             error:
               axiosError.response?.data?.error ?? "Failed to fetch products",
-            isLoading: false,
+          });
+        }
+      },
+      fetchAllUsers: async () => {
+        try {
+          set({ isLoading: true, error: null });
+          const res = await api.get<{ success: true; users: User[] }>(
+            "/api/admin/users",
+          );
+          if ("success" in res.data && res.data.success === true) {
+            set({
+              totalUsers: res.data.users.length,
+              recentUsers: res.data.users,
+            });
+          } else {
+            set({ error: "Failed to fetch users" });
+          }
+        } catch (error) {
+          console.error("Error fetching users:", error);
+          const axiosError = error as AxiosError<{ error?: string }>;
+          set({
+            error: axiosError.response?.data?.error ?? "Failed to fetch users",
           });
         }
       },
