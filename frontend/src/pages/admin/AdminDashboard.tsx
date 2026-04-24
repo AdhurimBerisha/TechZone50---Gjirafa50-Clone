@@ -1,10 +1,5 @@
 import { useEffect, useMemo } from "react";
-import {
-  Package,
-  ShoppingCart,
-  Users,
-  DollarSign,
-} from "lucide-react";
+import { Package, ShoppingCart, Users, DollarSign } from "lucide-react";
 import { products } from "@/data/products";
 import { useAdminStore } from "@/stores/adminStore";
 
@@ -74,7 +69,7 @@ const AdminDashboard = () => {
         label: "Totali i produkteve",
         value: statsLoading ? "…" : formatCount(totalProducts),
         icon: Package,
-        color: "bg-blue-500",
+        color: "bg-orange-600",
       },
       {
         label: "Porosi sot",
