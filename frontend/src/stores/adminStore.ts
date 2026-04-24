@@ -17,10 +17,29 @@ interface AdminState {
   recentRevenue: number[];
 }
 
+export type CreateProductPayload = {
+  name: string;
+  slug: string;
+  description?: string;
+  category: string;
+  categorySlug: string;
+  price: number;
+  oldPrice?: number | null;
+  rating?: number;
+  image?: string;
+  images?: string[];
+  stock?: number;
+  isFeatured?: boolean;
+  isActive?: boolean;
+};
+
 interface AdminActions {
   fetchAllProducts: () => Promise<void>;
   fetchAllUsers: () => Promise<void>;
   fetchDashboardStats: () => Promise<void>;
+  createProduct: (
+    payload: CreateProductPayload,
+  ) => Promise<{ ok: true } | { ok: false; error: string }>;
 }
 
 type AdminStore = AdminState & AdminActions;
@@ -146,6 +165,35 @@ export const useAdminStore = create<AdminStore>()(
               "Failed to load dashboard statistics",
             isLoading: false,
           });
+        }
+      },
+      createProduct: async (payload) => {
+        try {
+          const res = await api.post<
+            { success: true; product: BackendProduct } | { error: string }
+          >("/api/admin/products", payload);
+          const data = res.data;
+          if ("success" in data && data.success === true && "product" in data) {
+            const created = data.product;
+            set((s) => ({
+              recentProducts: [created, ...s.recentProducts],
+              totalProducts: s.totalProducts + 1,
+            }));
+            return { ok: true as const };
+          }
+          const msg =
+            "error" in res.data && typeof res.data.error === "string"
+              ? res.data.error
+              : "Failed to create product";
+          return { ok: false as const, error: msg };
+        } catch (error) {
+          console.error("Error creating product:", error);
+          const axiosError = error as AxiosError<{ error?: string }>;
+          return {
+            ok: false as const,
+            error:
+              axiosError.response?.data?.error ?? "Failed to create product",
+          };
         }
       },
     }),

@@ -2,9 +2,11 @@ import { useEffect, useMemo, useState } from "react";
 import { Plus, Edit, Trash2, Search, Loader2 } from "lucide-react";
 import { useAdminStore } from "@/stores/adminStore";
 import { toUiProduct } from "@/stores/productStore";
+import { AddProductDialog } from "@/components/admin/AddProductDialog";
 
 const AdminProducts = () => {
   const [search, setSearch] = useState("");
+  const [addOpen, setAddOpen] = useState(false);
 
   const fetchAllProducts = useAdminStore((s) => s.fetchAllProducts);
   const isLoading = useAdminStore((s) => s.isLoading);
@@ -52,10 +54,16 @@ const AdminProducts = () => {
             className="w-full pl-9 pr-4 py-2 border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
           />
         </div>
-        <button className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm font-medium hover:bg-primary/90">
+        <button
+          type="button"
+          onClick={() => setAddOpen(true)}
+          className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm font-medium hover:bg-primary/90"
+        >
           <Plus className="h-4 w-4" /> Shto produkt
         </button>
       </div>
+
+      <AddProductDialog open={addOpen} onOpenChange={setAddOpen} />
 
       {error ? (
         <p className="text-sm text-destructive" role="alert">
