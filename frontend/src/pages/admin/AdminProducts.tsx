@@ -1,14 +1,43 @@
-import { useState } from "react";
-import { products } from "@/data/products";
-import { Plus, Edit, Trash2, Search } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Plus, Edit, Trash2, Search, Loader2 } from "lucide-react";
+import { useAdminStore } from "@/stores/adminStore";
+import { toUiProduct } from "@/stores/productStore";
 
 const AdminProducts = () => {
   const [search, setSearch] = useState("");
-  const filtered = products.filter(
-    (p) =>
-      p.name.toLowerCase().includes(search.toLowerCase()) ||
-      p.brand.toLowerCase().includes(search.toLowerCase()),
+
+  const fetchAllProducts = useAdminStore((s) => s.fetchAllProducts);
+  const isLoading = useAdminStore((s) => s.isLoading);
+  const error = useAdminStore((s) => s.error);
+  const recentProducts = useAdminStore((s) => s.recentProducts);
+
+  const rows = useMemo(
+    () => recentProducts.map((p) => toUiProduct(p)),
+    [recentProducts],
   );
+
+  const filtered = useMemo(
+    () =>
+      rows.filter(
+        (p) =>
+          p.name.toLowerCase().includes(search.toLowerCase()) ||
+          p.brand.toLowerCase().includes(search.toLowerCase()) ||
+          p.category.toLowerCase().includes(search.toLowerCase()),
+      ),
+    [rows, search],
+  );
+
+  useEffect(() => {
+    void fetchAllProducts();
+  }, [fetchAllProducts]);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center">
+        <Loader2 className="h-4 w-4 animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
@@ -27,6 +56,12 @@ const AdminProducts = () => {
           <Plus className="h-4 w-4" /> Shto produkt
         </button>
       </div>
+
+      {error ? (
+        <p className="text-sm text-destructive" role="alert">
+          {error}
+        </p>
+      ) : null}
 
       <div className="bg-white rounded-lg border border-border overflow-x-auto">
         <table className="w-full">
@@ -50,47 +85,60 @@ const AdminProducts = () => {
             </tr>
           </thead>
           <tbody>
-            {filtered.map((p) => (
-              <tr
-                key={p.id}
-                className="border-b border-border last:border-b-0 hover:bg-muted/30"
-              >
-                <td className="px-5 py-3">
-                  <div className="flex items-center gap-3">
-                    <img
-                      src={p.image}
-                      alt={p.name}
-                      className="w-10 h-10 object-contain rounded"
-                    />
-                    <div>
-                      <p className="text-sm font-medium">{p.name}</p>
-                      <p className="text-xs text-muted-foreground">{p.brand}</p>
-                    </div>
-                  </div>
-                </td>
-                <td className="px-5 py-3 text-sm">{p.category}</td>
-                <td className="px-5 py-3 text-sm font-medium">
-                  {p.price.toFixed(2)}€
-                </td>
-                <td className="px-5 py-3">
-                  <span
-                    className={`text-xs px-2 py-1 rounded-full ${p.inStock ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}
-                  >
-                    {p.inStock ? "Në stok" : "Jashtë stokut"}
-                  </span>
-                </td>
-                <td className="px-5 py-3">
-                  <div className="flex items-center gap-2">
-                    <button className="p-1.5 rounded hover:bg-muted text-muted-foreground hover:text-primary">
-                      <Edit className="h-4 w-4" />
-                    </button>
-                    <button className="p-1.5 rounded hover:bg-muted text-muted-foreground hover:text-destructive">
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </div>
+            {filtered.length === 0 ? (
+              <tr>
+                <td
+                  colSpan={5}
+                  className="px-5 py-8 text-center text-sm text-muted-foreground"
+                >
+                  {rows.length === 0
+                    ? "Nuk ka produkte në databazë."
+                    : "Nuk u gjet asnjë produkt për këtë kërkim."}
                 </td>
               </tr>
-            ))}
+            ) : (
+              filtered.map((p) => (
+                <tr
+                  key={p.id}
+                  className="border-b border-border last:border-b-0 hover:bg-muted/30"
+                >
+                  <td className="px-5 py-3">
+                    <div className="flex items-center gap-3">
+                      <img
+                        src={p.image}
+                        alt={p.name}
+                        className="w-10 h-10 object-contain rounded"
+                      />
+                      <div>
+                        <p className="text-sm font-medium">{p.name}</p>
+                        <p className="text-xs text-muted-foreground">{p.brand}</p>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-5 py-3 text-sm">{p.category}</td>
+                  <td className="px-5 py-3 text-sm font-medium">
+                    {p.price.toFixed(2)}€
+                  </td>
+                  <td className="px-5 py-3">
+                    <span
+                      className={`text-xs px-2 py-1 rounded-full ${p.inStock ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}
+                    >
+                      {p.inStock ? "Në stok" : "Jashtë stokut"}
+                    </span>
+                  </td>
+                  <td className="px-5 py-3">
+                    <div className="flex items-center gap-2">
+                      <button className="p-1.5 rounded hover:bg-muted text-muted-foreground hover:text-primary">
+                        <Edit className="h-4 w-4" />
+                      </button>
+                      <button className="p-1.5 rounded hover:bg-muted text-muted-foreground hover:text-destructive">
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>

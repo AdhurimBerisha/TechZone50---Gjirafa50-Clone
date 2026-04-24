@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { AxiosError } from "axios";
 import { api } from "@/lib/api";
+import type { BackendProduct } from "@/stores/productStore";
 
 interface AdminState {
   isLoading: boolean;
@@ -11,7 +12,7 @@ interface AdminState {
   totalUsers: number;
   totalRevenue: number;
   recentOrders: Order[];
-  recentProducts: Product[];
+  recentProducts: BackendProduct[];
   recentUsers: User[];
   recentRevenue: number[];
 }
@@ -27,15 +28,6 @@ interface Order {
   id: string;
   total: number;
   status: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-interface Product {
-  id: string;
-  name: string;
-  price: number;
-  stock: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -68,9 +60,10 @@ export const useAdminStore = create<AdminStore>()(
       fetchAllProducts: async () => {
         try {
           set({ isLoading: true, error: null });
-          const res = await api.get<{ success: true; products: Product[] }>(
-            "/api/admin/products",
-          );
+          const res = await api.get<{
+            success: true;
+            products: BackendProduct[];
+          }>("/api/admin/products");
           if ("success" in res.data && res.data.success === true) {
             set({
               totalProducts: res.data.products.length,
