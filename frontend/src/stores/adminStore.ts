@@ -20,6 +20,7 @@ interface AdminState {
 interface AdminActions {
   fetchAllProducts: () => Promise<void>;
   fetchAllUsers: () => Promise<void>;
+  fetchDashboardStats: () => Promise<void>;
 }
 
 type AdminStore = AdminState & AdminActions;
@@ -103,6 +104,46 @@ export const useAdminStore = create<AdminStore>()(
           const axiosError = error as AxiosError<{ error?: string }>;
           set({
             error: axiosError.response?.data?.error ?? "Failed to fetch users",
+            isLoading: false,
+          });
+        }
+      },
+      fetchDashboardStats: async () => {
+        try {
+          set({ isLoading: true, error: null });
+          const [productsRes, usersRes] = await Promise.all([
+            api.get<{ success: true; products: BackendProduct[] }>(
+              "/api/admin/products",
+            ),
+            api.get<{ success: true; users: User[] }>("/api/admin/users"),
+          ]);
+          const productsOk =
+            "success" in productsRes.data &&
+            productsRes.data.success === true;
+          const usersOk =
+            "success" in usersRes.data && usersRes.data.success === true;
+          if (!productsOk || !usersOk) {
+            set({
+              error: "Failed to load dashboard statistics",
+              isLoading: false,
+            });
+            return;
+          }
+          set({
+            totalProducts: productsRes.data.products.length,
+            recentProducts: productsRes.data.products,
+            totalUsers: usersRes.data.users.length,
+            recentUsers: usersRes.data.users,
+            isLoading: false,
+            error: null,
+          });
+        } catch (error) {
+          console.error("Error fetching dashboard stats:", error);
+          const axiosError = error as AxiosError<{ error?: string }>;
+          set({
+            error:
+              axiosError.response?.data?.error ??
+              "Failed to load dashboard statistics",
             isLoading: false,
           });
         }

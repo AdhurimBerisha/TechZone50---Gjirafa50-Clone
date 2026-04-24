@@ -1,3 +1,4 @@
+import { useEffect, useMemo } from "react";
 import {
   Package,
   ShoppingCart,
@@ -5,28 +6,11 @@ import {
   DollarSign,
 } from "lucide-react";
 import { products } from "@/data/products";
+import { useAdminStore } from "@/stores/adminStore";
 
-const stats = [
-  {
-    label: "Totali i produkteve",
-    value: "12",
-    icon: Package,
-    color: "bg-blue-500",
-  },
-  {
-    label: "Porosi sot",
-    value: "24",
-    icon: ShoppingCart,
-    color: "bg-green-500",
-  },
-  { label: "Përdorues", value: "1,234", icon: Users, color: "bg-purple-500" },
-  {
-    label: "Të ardhurat",
-    value: "45,678€",
-    icon: DollarSign,
-    color: "bg-primary",
-  },
-];
+function formatCount(n: number) {
+  return n.toLocaleString("sq-AL");
+}
 
 const recentOrders = [
   {
@@ -74,8 +58,53 @@ const statusColors: Record<string, string> = {
 };
 
 const AdminDashboard = () => {
+  const fetchDashboardStats = useAdminStore((s) => s.fetchDashboardStats);
+  const totalProducts = useAdminStore((s) => s.totalProducts);
+  const totalUsers = useAdminStore((s) => s.totalUsers);
+  const statsLoading = useAdminStore((s) => s.isLoading);
+  const statsError = useAdminStore((s) => s.error);
+
+  useEffect(() => {
+    void fetchDashboardStats();
+  }, [fetchDashboardStats]);
+
+  const stats = useMemo(
+    () => [
+      {
+        label: "Totali i produkteve",
+        value: statsLoading ? "…" : formatCount(totalProducts),
+        icon: Package,
+        color: "bg-blue-500",
+      },
+      {
+        label: "Porosi sot",
+        value: "24",
+        icon: ShoppingCart,
+        color: "bg-green-500",
+      },
+      {
+        label: "Përdorues",
+        value: statsLoading ? "…" : formatCount(totalUsers),
+        icon: Users,
+        color: "bg-purple-500",
+      },
+      {
+        label: "Të ardhurat",
+        value: "45,678€",
+        icon: DollarSign,
+        color: "bg-primary",
+      },
+    ],
+    [statsLoading, totalProducts, totalUsers],
+  );
+
   return (
     <div className="space-y-6">
+      {statsError ? (
+        <p className="text-sm text-destructive" role="alert">
+          {statsError}
+        </p>
+      ) : null}
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((stat) => (
