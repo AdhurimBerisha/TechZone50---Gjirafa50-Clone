@@ -3,7 +3,7 @@ import { AxiosError } from "axios";
 import { api } from "@/lib/api";
 import type { Product as UiProduct } from "@/data/products";
 
-type BackendProduct = {
+export type BackendProduct = {
   id: string;
   name: string;
   slug: string;
@@ -22,7 +22,7 @@ type BackendProduct = {
   updatedAt: string;
 };
 
-function toUiProduct(p: BackendProduct): UiProduct {
+export function toUiProduct(p: BackendProduct): UiProduct {
   return {
     id: p.id,
     name: p.name,
