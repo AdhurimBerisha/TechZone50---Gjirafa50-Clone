@@ -27,7 +27,9 @@ import {
 const ProductPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const product = useProductStore((s) => (id ? s.getProductById(id) : undefined));
+  const product = useProductStore((s) =>
+    id ? s.getProductById(id) : undefined,
+  );
   const isLoading = useProductStore((s) => s.isLoading);
   const fetchProductById = useProductStore((s) => s.fetchProductById);
   const allProducts = useProductStore((s) => s.products);
@@ -299,7 +301,7 @@ const ProductPage = () => {
               disabled={isBuyNowLoading || !product.inStock}
               onClick={() => void handleBuyNow()}
             >
-              {isBuyNowLoading ? "Duke ju dërguar te pagesa..." : "Bler tani"}
+              {isBuyNowLoading ? "Duke ju dërguar te pagesa..." : "Blej tani"}
             </Button>
           </div>
 
