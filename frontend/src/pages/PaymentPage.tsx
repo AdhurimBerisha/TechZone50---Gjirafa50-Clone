@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router";
+import { Link, useSearchParams } from "react-router";
 import { useAuth } from "@clerk/react";
 import { toast } from "sonner";
 import { useCartStore } from "@/stores/cartStore";
@@ -22,7 +22,10 @@ import {
 const PaymentPage = () => {
   const { items, totalPrice, clearCart, fetchCartFromServer } = useCartStore();
   const checkoutCart = useOrderStore((s) => s.checkoutCart);
+  const createStripeSession = useOrderStore((s) => s.createStripeSession);
+  const completeStripeCheckout = useOrderStore((s) => s.completeStripeCheckout);
   const { isSignedIn, isLoaded, getToken } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -38,6 +41,47 @@ const PaymentPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [orderCompleted, setOrderCompleted] = useState(false);
   const [orderNumber, setOrderNumber] = useState("");
+
+  useEffect(() => {
+    if (!isLoaded || isSignedIn !== true) return;
+    const stripeStatus = searchParams.get("stripe");
+    const sessionId = searchParams.get("session_id");
+    if (stripeStatus !== "success" || !sessionId || orderCompleted) return;
+
+    void (async () => {
+      try {
+        setIsSubmitting(true);
+        const token = await getToken();
+        if (!token) {
+          toast.error("Sesioni skadoi. Hyni përsëri.");
+          return;
+        }
+        const order = await completeStripeCheckout(token, sessionId);
+        setOrderNumber(`GJ-${order.id.slice(-8).toUpperCase()}`);
+        clearCart();
+        setOrderCompleted(true);
+        setSearchParams({});
+        toast.success("Pagesa me kartë u konfirmua me sukses.");
+      } catch (error) {
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : "Gabim gjatë konfirmimit të pagesës online.",
+        );
+      } finally {
+        setIsSubmitting(false);
+      }
+    })();
+  }, [
+    clearCart,
+    completeStripeCheckout,
+    getToken,
+    isLoaded,
+    isSignedIn,
+    orderCompleted,
+    searchParams,
+    setSearchParams,
+  ]);
 
   useEffect(() => {
     if (!isLoaded || isSignedIn !== true) return;
@@ -91,12 +135,18 @@ const PaymentPage = () => {
         return;
       }
 
+      if (formData.paymentMethod === "online") {
+        const { sessionId, checkoutUrl } = await createStripeSession(token);
+        if (!sessionId || !checkoutUrl) {
+          throw new Error("Sesioni i pagesës online është i pavlefshëm");
+        }
+        window.location.href = checkoutUrl;
+        return;
+      }
+
       const order = await checkoutCart(token);
-      const orderNum = `GJ-${order.id.slice(-8).toUpperCase()}`;
-      setOrderNumber(orderNum);
-
+      setOrderNumber(`GJ-${order.id.slice(-8).toUpperCase()}`);
       clearCart();
-
       setOrderCompleted(true);
       toast.success("Porosia u krijua me sukses.");
     } catch (error) {
@@ -126,6 +176,12 @@ const PaymentPage = () => {
 
   return (
     <div className="max-w-[1320px] mx-auto px-4 lg:px-8 py-6">
+      {searchParams.get("stripe") === "cancel" && (
+        <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          Pagesa online u anulua. Mund të provoni përsëri ose të zgjidhni një
+          metodë tjetër pagese.
+        </div>
+      )}
       <div className="mb-6">
         <h1 className="text-2xl font-semibold">Vazhdo pagesën</h1>
         <p className="text-muted-foreground mt-1">

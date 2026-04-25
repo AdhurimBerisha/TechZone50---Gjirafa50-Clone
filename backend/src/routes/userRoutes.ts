@@ -8,6 +8,8 @@ import {
   getCurrentUser,
   orderProduct,
   checkoutCart,
+  createStripeCheckoutSession,
+  completeStripeCheckout,
   addToWishList,
   removeFromWishList,
   fetchWishlist,
@@ -31,6 +33,16 @@ router.post("/wishlist", requireClerkAuth, addToWishList);
 router.delete("/wishlist", requireClerkAuth, removeFromWishList);
 router.post("/order", requireClerkAuth, orderProduct);
 router.post("/order/checkout", requireClerkAuth, checkoutCart);
+router.post(
+  "/order/stripe/create-session",
+  requireClerkAuth,
+  createStripeCheckoutSession,
+);
+router.post(
+  "/order/stripe/complete",
+  requireClerkAuth,
+  completeStripeCheckout,
+);
 router.get("/cart", requireClerkAuth, fetchCart);
 router.post("/cart", requireClerkAuth, addToCart);
 router.patch("/cart", requireClerkAuth, updateCartItem);
