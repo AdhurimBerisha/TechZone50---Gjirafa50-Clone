@@ -1,6 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router";
+import { useAuth } from "@clerk/react";
+import { toast } from "sonner";
 import { useCartStore } from "@/stores/cartStore";
+import { useOrderStore } from "@/stores/orderStore";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,7 +20,9 @@ import {
 } from "lucide-react";
 
 const PaymentPage = () => {
-  const { items, totalPrice, clearCart } = useCartStore();
+  const { items, totalPrice, clearCart, fetchCartFromServer } = useCartStore();
+  const checkoutCart = useOrderStore((s) => s.checkoutCart);
+  const { isSignedIn, isLoaded, getToken } = useAuth();
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -33,6 +38,20 @@ const PaymentPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [orderCompleted, setOrderCompleted] = useState(false);
   const [orderNumber, setOrderNumber] = useState("");
+
+  useEffect(() => {
+    if (!isLoaded || isSignedIn !== true) return;
+    void (async () => {
+      try {
+        const token = await getToken();
+        if (token) {
+          await fetchCartFromServer(token);
+        }
+      } catch {
+        /* errors shown on interaction */
+      }
+    })();
+  }, [isLoaded, isSignedIn, getToken, fetchCartFromServer]);
 
   const handleInputChange = (field: string, value: string | boolean) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -61,17 +80,30 @@ const PaymentPage = () => {
     setIsSubmitting(true);
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      if (isSignedIn !== true) {
+        toast.error("Ju lutem hyni për të përfunduar porosinë.");
+        return;
+      }
 
-      const orderNum = `GJ${Date.now().toString().slice(-8)}`;
+      const token = await getToken();
+      if (!token) {
+        toast.error("Sesioni skadoi. Hyni përsëri.");
+        return;
+      }
+
+      const order = await checkoutCart(token);
+      const orderNum = `GJ-${order.id.slice(-8).toUpperCase()}`;
       setOrderNumber(orderNum);
 
       clearCart();
 
       setOrderCompleted(true);
+      toast.success("Porosia u krijua me sukses.");
     } catch (error) {
-      alert(
-        "Ndodhi një gabim gjatë përpunimit të porosisë. Ju lutem provoni përsëri.",
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Ndodhi një gabim gjatë përpunimit të porosisë.",
       );
     } finally {
       setIsSubmitting(false);
