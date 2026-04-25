@@ -1,12 +1,12 @@
 import { useParams, Link } from "react-router";
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router";
 import { useAuth } from "@clerk/react";
 import { toast } from "sonner";
 import ProductCard from "@/components/ProductCard";
 import { useCartStore } from "@/stores/cartStore";
 import { useWishlistStore } from "@/stores/wishlistStore";
 import { useProductStore } from "@/stores/productStore";
-import { useOrderStore } from "@/stores/orderStore";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -26,6 +26,7 @@ import {
 
 const ProductPage = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const product = useProductStore((s) => (id ? s.getProductById(id) : undefined));
   const isLoading = useProductStore((s) => s.isLoading);
   const fetchProductById = useProductStore((s) => s.fetchProductById);
@@ -36,8 +37,7 @@ const ProductPage = () => {
   const addToCartServer = useCartStore((s) => s.addToCartServer);
   const { isInWishlist, syncToggleWishlist } = useWishlistStore();
   const { getToken, isSignedIn } = useAuth();
-  const orderProduct = useOrderStore((s) => s.orderProduct);
-  const isOrdering = useOrderStore((s) => s.isOrdering);
+  const [isBuyNowLoading, setIsBuyNowLoading] = useState(false);
 
   useEffect(() => {
     if (id) void fetchProductById(id);
@@ -101,18 +101,18 @@ const ProductPage = () => {
       return;
     }
     try {
+      setIsBuyNowLoading(true);
       const token = await getToken();
       if (!token) {
         toast.error("Sesioni skadoi. Hyni përsëri.");
         return;
       }
-      await orderProduct(token, product.id, quantity);
-      toast.success("Porosia u krijua me sukses.");
-      if (id) {
-        void fetchProductById(id);
-      }
+      await addToCartServer(token, product.id, quantity);
+      navigate("/payment");
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Porosia dështoi.");
+      toast.error(e instanceof Error ? e.message : "Nuk u vazhdua te pagesa.");
+    } finally {
+      setIsBuyNowLoading(false);
     }
   };
 
@@ -296,10 +296,10 @@ const ProductPage = () => {
             <Button
               variant="outline"
               className="w-full"
-              disabled={isOrdering || !product.inStock}
+              disabled={isBuyNowLoading || !product.inStock}
               onClick={() => void handleBuyNow()}
             >
-              {isOrdering ? "Duke u procesuar..." : "Bler tani"}
+              {isBuyNowLoading ? "Duke ju dërguar te pagesa..." : "Bler tani"}
             </Button>
           </div>
 
