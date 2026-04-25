@@ -2,6 +2,79 @@ import type { Request, Response } from "express";
 import { OrderStatus, type Prisma } from "../generated/prisma/client";
 import { prisma } from "../lib/prisma";
 import { getClerkUserId } from "../middleware/authMiddleware";
+import Stripe from "stripe";
+
+const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
+const stripe =
+  stripeSecretKey && stripeSecretKey.trim().length > 0
+    ? new Stripe(stripeSecretKey)
+    : null;
+
+async function createOrderFromUserCart(userId: string) {
+  const cartItems = await prisma.cartItem.findMany({
+    where: { userId },
+    include: { product: true },
+  });
+
+  if (cartItems.length === 0) {
+    throw new Error("Cart is empty");
+  }
+
+  for (const item of cartItems) {
+    if (!item.product.isActive) {
+      throw new Error(`Product "${item.product.name}" is not available`);
+    }
+    if (item.product.stock < item.quantity) {
+      throw new Error(`Not enough stock for "${item.product.name}"`);
+    }
+  }
+
+  const total = cartItems.reduce(
+    (sum, item) => sum + item.product.price * item.quantity,
+    0,
+  );
+
+  const order = await prisma.$transaction(async (tx) => {
+    const createdOrder = await tx.order.create({
+      data: {
+        userId,
+        total,
+        status: OrderStatus.PENDING,
+      },
+    });
+
+    await tx.orderItem.createMany({
+      data: cartItems.map((item) => ({
+        orderId: createdOrder.id,
+        productId: item.productId,
+        quantity: item.quantity,
+        price: item.product.price,
+      })),
+    });
+
+    for (const item of cartItems) {
+      await tx.product.update({
+        where: { id: item.productId },
+        data: {
+          stock: {
+            decrement: item.quantity,
+          },
+        },
+      });
+    }
+
+    await tx.cartItem.deleteMany({
+      where: { userId },
+    });
+
+    return createdOrder;
+  });
+
+  return prisma.order.findUnique({
+    where: { id: order.id },
+    include: { items: true },
+  });
+}
 
 const syncUser = async (req: Request, res: Response) => {
   const clerkId = getClerkUserId(req);
@@ -270,78 +343,125 @@ const checkoutCart = async (req: Request, res: Response) => {
       return res.status(404).json({ error: "User not found" });
     }
 
+    const fullOrder = await createOrderFromUserCart(user.id);
+    return res.status(200).json({ success: true, order: fullOrder });
+  } catch (error) {
+    if (error instanceof Error && error.message.length > 0) {
+      return res.status(400).json({ error: error.message });
+    }
+    console.error("Error during checkout:", error);
+    return res.status(500).json({ error: "Failed to checkout" });
+  }
+};
+
+const createStripeCheckoutSession = async (req: Request, res: Response) => {
+  try {
+    if (!stripe) {
+      return res.status(500).json({ error: "Stripe is not configured" });
+    }
+
+    const clerkId = getClerkUserId(req);
+    if (!clerkId) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { clerkId },
+      select: { id: true, email: true },
+    });
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
     const cartItems = await prisma.cartItem.findMany({
       where: { userId: user.id },
       include: { product: true },
     });
-
     if (cartItems.length === 0) {
       return res.status(400).json({ error: "Cart is empty" });
     }
 
-    for (const item of cartItems) {
-      if (!item.product.isActive) {
-        return res.status(400).json({
-          error: `Product "${item.product.name}" is not available`,
-        });
-      }
-      if (item.product.stock < item.quantity) {
-        return res.status(400).json({
-          error: `Not enough stock for "${item.product.name}"`,
-        });
-      }
+    const frontendUrl =
+      process.env.FRONTEND_URL?.trim() || "http://localhost:5173";
+    const session = await stripe.checkout.sessions.create({
+      mode: "payment",
+      payment_method_types: ["card"],
+      line_items: cartItems.map((item) => ({
+        quantity: item.quantity,
+        price_data: {
+          currency: "eur",
+          unit_amount: Math.round(item.product.price * 100),
+          product_data: item.product.image
+            ? {
+                name: item.product.name,
+                images: [item.product.image],
+              }
+            : {
+                name: item.product.name,
+              },
+        },
+      })),
+      customer_email: user.email ?? undefined,
+      success_url: `${frontendUrl}/payment?stripe=success&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${frontendUrl}/payment?stripe=cancel`,
+      metadata: {
+        clerkId,
+      },
+    });
+
+    return res.status(200).json({
+      success: true,
+      sessionId: session.id,
+      checkoutUrl: session.url,
+    });
+  } catch (error) {
+    console.error("Error creating Stripe session:", error);
+    return res.status(500).json({ error: "Failed to create Stripe session" });
+  }
+};
+
+const completeStripeCheckout = async (req: Request, res: Response) => {
+  try {
+    if (!stripe) {
+      return res.status(500).json({ error: "Stripe is not configured" });
     }
 
-    const total = cartItems.reduce(
-      (sum, item) => sum + item.product.price * item.quantity,
-      0,
-    );
+    const clerkId = getClerkUserId(req);
+    const { sessionId } = req.body as { sessionId?: string };
 
-    const order = await prisma.$transaction(async (tx) => {
-      const createdOrder = await tx.order.create({
-        data: {
-          userId: user.id,
-          total,
-          status: OrderStatus.PENDING,
-        },
-      });
+    if (!clerkId) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+    if (!sessionId) {
+      return res.status(400).json({ error: "sessionId is required" });
+    }
 
-      await tx.orderItem.createMany({
-        data: cartItems.map((item) => ({
-          orderId: createdOrder.id,
-          productId: item.productId,
-          quantity: item.quantity,
-          price: item.product.price,
-        })),
-      });
+    const session = await stripe.checkout.sessions.retrieve(sessionId);
+    if (session.payment_status !== "paid") {
+      return res.status(400).json({ error: "Payment is not completed" });
+    }
 
-      for (const item of cartItems) {
-        await tx.product.update({
-          where: { id: item.productId },
-          data: {
-            stock: {
-              decrement: item.quantity,
-            },
-          },
-        });
-      }
+    const sessionClerkId = session.metadata?.clerkId;
+    if (!sessionClerkId || sessionClerkId !== clerkId) {
+      return res.status(403).json({ error: "Session does not belong to user" });
+    }
 
-      await tx.cartItem.deleteMany({
-        where: { userId: user.id },
-      });
-
-      return createdOrder;
+    const user = await prisma.user.findUnique({
+      where: { clerkId },
+      select: { id: true },
     });
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
 
-    const fullOrder = await prisma.order.findUnique({
-      where: { id: order.id },
-      include: { items: true },
-    });
-
-    return res.status(200).json({ success: true, order: fullOrder });
+    const order = await createOrderFromUserCart(user.id);
+    return res.status(200).json({ success: true, order });
   } catch (error) {
-    console.error("Error during checkout:", error);
-    return res.status(500).json({ error: "Failed to checkout" });
+    if (error instanceof Error && error.message.length > 0) {
+      return res.status(400).json({ error: error.message });
+    }
+    console.error("Error completing Stripe checkout:", error);
+    return res.status(500).json({ error: "Failed to finalize Stripe checkout" });
   }
 };
 
@@ -740,6 +860,8 @@ export {
   getCurrentUser,
   orderProduct,
   checkoutCart,
+  createStripeCheckoutSession,
+  completeStripeCheckout,
   addToWishList,
   removeFromWishList,
   fetchWishlist,

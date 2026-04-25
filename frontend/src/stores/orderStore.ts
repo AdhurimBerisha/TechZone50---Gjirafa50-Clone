@@ -42,6 +42,13 @@ interface OrderState {
     quantity: number,
   ) => Promise<PlacedOrder>;
   checkoutCart: (token: string) => Promise<PlacedOrder>;
+  createStripeSession: (
+    token: string,
+  ) => Promise<{ sessionId: string; checkoutUrl: string }>;
+  completeStripeCheckout: (
+    token: string,
+    sessionId: string,
+  ) => Promise<PlacedOrder>;
   fetchOrders: (token: string) => Promise<void>;
 }
 
@@ -137,6 +144,74 @@ export const useOrderStore = create<OrderState>()((set) => ({
       const res = await api.post<OrderResponse>(
         "/api/users/order/checkout",
         {},
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+      if ("success" in res.data && res.data.success === true) {
+        const placed = res.data.order;
+        set((state) => ({
+          lastOrder: placed,
+          isOrdering: false,
+          orders: [
+            placed,
+            ...state.orders.filter((o) => o.id !== placed.id),
+          ],
+        }));
+        return placed;
+      }
+      const msg =
+        "error" in res.data && res.data.error
+          ? res.data.error
+          : "Porosia dështoi";
+      set({ isOrdering: false, orderError: msg });
+      throw new Error(msg);
+    } catch (e) {
+      const msg = getErrorMessage(e);
+      set({ isOrdering: false, orderError: msg });
+      throw new Error(msg);
+    }
+  },
+
+  createStripeSession: async (token) => {
+    set({ isOrdering: true, orderError: null });
+    try {
+      const res = await api.post<
+        | {
+            success: true;
+            sessionId: string;
+            checkoutUrl: string;
+          }
+        | { success?: false; error?: string }
+      >(
+        "/api/users/order/stripe/create-session",
+        {},
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+      if ("success" in res.data && res.data.success === true) {
+        set({ isOrdering: false });
+        return {
+          sessionId: res.data.sessionId,
+          checkoutUrl: res.data.checkoutUrl,
+        };
+      }
+      const msg =
+        "error" in res.data && res.data.error
+          ? res.data.error
+          : "Dështoi nisja e pagesës online";
+      set({ isOrdering: false, orderError: msg });
+      throw new Error(msg);
+    } catch (e) {
+      const msg = getErrorMessage(e);
+      set({ isOrdering: false, orderError: msg });
+      throw new Error(msg);
+    }
+  },
+
+  completeStripeCheckout: async (token, sessionId) => {
+    set({ isOrdering: true, orderError: null });
+    try {
+      const res = await api.post<OrderResponse>(
+        "/api/users/order/stripe/complete",
+        { sessionId },
         { headers: { Authorization: `Bearer ${token}` } },
       );
       if ("success" in res.data && res.data.success === true) {
