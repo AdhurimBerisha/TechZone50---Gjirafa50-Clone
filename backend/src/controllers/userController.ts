@@ -255,6 +255,96 @@ const orderProduct = async (req: Request, res: Response) => {
   }
 };
 
+const checkoutCart = async (req: Request, res: Response) => {
+  try {
+    const clerkId = getClerkUserId(req);
+    if (!clerkId) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { clerkId },
+      select: { id: true },
+    });
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const cartItems = await prisma.cartItem.findMany({
+      where: { userId: user.id },
+      include: { product: true },
+    });
+
+    if (cartItems.length === 0) {
+      return res.status(400).json({ error: "Cart is empty" });
+    }
+
+    for (const item of cartItems) {
+      if (!item.product.isActive) {
+        return res.status(400).json({
+          error: `Product "${item.product.name}" is not available`,
+        });
+      }
+      if (item.product.stock < item.quantity) {
+        return res.status(400).json({
+          error: `Not enough stock for "${item.product.name}"`,
+        });
+      }
+    }
+
+    const total = cartItems.reduce(
+      (sum, item) => sum + item.product.price * item.quantity,
+      0,
+    );
+
+    const order = await prisma.$transaction(async (tx) => {
+      const createdOrder = await tx.order.create({
+        data: {
+          userId: user.id,
+          total,
+          status: OrderStatus.PENDING,
+        },
+      });
+
+      await tx.orderItem.createMany({
+        data: cartItems.map((item) => ({
+          orderId: createdOrder.id,
+          productId: item.productId,
+          quantity: item.quantity,
+          price: item.product.price,
+        })),
+      });
+
+      for (const item of cartItems) {
+        await tx.product.update({
+          where: { id: item.productId },
+          data: {
+            stock: {
+              decrement: item.quantity,
+            },
+          },
+        });
+      }
+
+      await tx.cartItem.deleteMany({
+        where: { userId: user.id },
+      });
+
+      return createdOrder;
+    });
+
+    const fullOrder = await prisma.order.findUnique({
+      where: { id: order.id },
+      include: { items: true },
+    });
+
+    return res.status(200).json({ success: true, order: fullOrder });
+  } catch (error) {
+    console.error("Error during checkout:", error);
+    return res.status(500).json({ error: "Failed to checkout" });
+  }
+};
+
 const addToWishList = async (req: Request, res: Response) => {
   try {
     const clerkId = getClerkUserId(req);
@@ -649,6 +739,7 @@ export {
   getUserById,
   getCurrentUser,
   orderProduct,
+  checkoutCart,
   addToWishList,
   removeFromWishList,
   fetchWishlist,

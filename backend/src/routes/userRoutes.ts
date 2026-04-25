@@ -7,6 +7,7 @@ import {
   getUserById,
   getCurrentUser,
   orderProduct,
+  checkoutCart,
   addToWishList,
   removeFromWishList,
   fetchWishlist,
@@ -29,6 +30,7 @@ router.get("/wishlist", requireClerkAuth, fetchWishlist);
 router.post("/wishlist", requireClerkAuth, addToWishList);
 router.delete("/wishlist", requireClerkAuth, removeFromWishList);
 router.post("/order", requireClerkAuth, orderProduct);
+router.post("/order/checkout", requireClerkAuth, checkoutCart);
 router.get("/cart", requireClerkAuth, fetchCart);
 router.post("/cart", requireClerkAuth, addToCart);
 router.patch("/cart", requireClerkAuth, updateCartItem);
