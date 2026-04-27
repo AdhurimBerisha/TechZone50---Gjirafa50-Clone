@@ -36,6 +36,7 @@ export type CreateProductPayload = {
 interface AdminActions {
   fetchAllProducts: () => Promise<void>;
   fetchAllUsers: () => Promise<void>;
+  fetchOrders: () => Promise<void>;
   fetchDashboardStats: () => Promise<void>;
   createProduct: (
     payload: CreateProductPayload,
@@ -50,6 +51,16 @@ interface Order {
   status: string;
   createdAt: string;
   updatedAt: string;
+  user?: {
+    id: string;
+    email: string;
+    name: string | null;
+  };
+  items?: Array<{
+    id: string;
+    quantity: number;
+    price: number;
+  }>;
 }
 
 interface User {
@@ -194,6 +205,36 @@ export const useAdminStore = create<AdminStore>()(
             error:
               axiosError.response?.data?.error ?? "Failed to create product",
           };
+        }
+      },
+      fetchOrders: async () => {
+        try {
+          set({ isLoading: true, error: null });
+          const res = await api.get<
+            { success: true; orders: Order[] } | { error: string }
+          >("/api/admin/orders");
+          const data = res.data;
+          if ("success" in data && data.success === true && "orders" in data) {
+            const orders = data.orders;
+            const totalRevenue = orders.reduce((sum, order) => sum + order.total, 0);
+            set({
+              recentOrders: orders,
+              totalOrders: orders.length,
+              totalRevenue,
+              isLoading: false,
+              error: null,
+            });
+          } else {
+            set({ error: "Failed to fetch orders", isLoading: false });
+          }
+        } catch (error) {
+          console.error("Error fetching orders:", error);
+          const axiosError = error as AxiosError<{ error?: string }>;
+          set({
+            error:
+              axiosError.response?.data?.error ?? "Failed to fetch orders",
+            isLoading: false,
+          });
         }
       },
     }),
