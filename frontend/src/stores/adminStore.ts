@@ -34,6 +34,9 @@ export type CreateProductPayload = {
   isActive?: boolean;
 };
 
+/** Body for `PUT /api/admin/products/:id` — same fields as create; all sent on save. */
+export type UpdateProductPayload = CreateProductPayload;
+
 interface AdminActions {
   fetchAllProducts: () => Promise<void>;
   fetchAllUsers: () => Promise<void>;
@@ -42,6 +45,10 @@ interface AdminActions {
   fetchTopSellingProducts: () => Promise<void>;
   createProduct: (
     payload: CreateProductPayload,
+  ) => Promise<{ ok: true } | { ok: false; error: string }>;
+  updateProduct: (
+    id: string,
+    payload: UpdateProductPayload,
   ) => Promise<{ ok: true } | { ok: false; error: string }>;
 }
 
@@ -246,6 +253,36 @@ export const useAdminStore = create<AdminStore>()(
             ok: false as const,
             error:
               axiosError.response?.data?.error ?? "Failed to create product",
+          };
+        }
+      },
+      updateProduct: async (id, payload) => {
+        try {
+          const res = await api.put<
+            { success: true; product: BackendProduct } | { error: string }
+          >(`/api/admin/products/${encodeURIComponent(id)}`, payload);
+          const data = res.data;
+          if ("success" in data && data.success === true && "product" in data) {
+            const updated = data.product;
+            set((s) => ({
+              recentProducts: s.recentProducts.map((p) =>
+                p.id === id ? updated : p,
+              ),
+            }));
+            return { ok: true as const };
+          }
+          const msg =
+            "error" in res.data && typeof res.data.error === "string"
+              ? res.data.error
+              : "Failed to update product";
+          return { ok: false as const, error: msg };
+        } catch (error) {
+          console.error("Error updating product:", error);
+          const axiosError = error as AxiosError<{ error?: string }>;
+          return {
+            ok: false as const,
+            error:
+              axiosError.response?.data?.error ?? "Failed to update product",
           };
         }
       },
