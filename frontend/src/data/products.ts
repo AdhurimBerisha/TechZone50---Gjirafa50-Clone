@@ -1,3 +1,5 @@
+import categoriesJson from "./categories.json" with { type: "json" };
+
 export interface Product {
   id: string;
   name: string;
@@ -17,86 +19,31 @@ export interface Product {
   installment?: string;
 }
 
+export interface MegaMenuColumn {
+  title: string;
+  links: { name: string; slug: string }[];
+  showMore?: boolean;
+}
+
+export interface MegaMenu {
+  columns: MegaMenuColumn[];
+  promoImage?: string;
+}
+
 export interface Category {
+  id?: string;
   name: string;
   slug: string;
   icon: string;
   subcategories: { name: string; slug: string }[];
+  megaMenu?: MegaMenu;
 }
 
-export const categories: Category[] = [
-  {
-    name: "Kompjuter, Laptop & Monitor",
-    slug: "kompjuter-laptop-monitor",
-    icon: "monitor",
-    subcategories: [
-      { name: "Desktop PC", slug: "desktop-pc" },
-      { name: "Laptop", slug: "laptop" },
-      { name: "Monitor", slug: "monitor" },
-      { name: "All-in-One", slug: "all-in-one" },
-    ],
-  },
-  {
-    name: "Celular, Tablet & Navigim",
-    slug: "celular-tablet-navigim",
-    icon: "smartphone",
-    subcategories: [
-      { name: "Smartphone", slug: "smartphone" },
-      { name: "Tablet", slug: "tablet" },
-      { name: "Smartwatch", slug: "smartwatch" },
-    ],
-  },
-  {
-    name: "TV, Audio & Foto",
-    slug: "tv-audio-foto",
-    icon: "tv",
-    subcategories: [
-      { name: "Televizor", slug: "televizor" },
-      { name: "Soundbar", slug: "soundbar" },
-      { name: "Kamera", slug: "kamera" },
-    ],
-  },
-  {
-    name: "Gaming",
-    slug: "gaming",
-    icon: "gamepad-2",
-    subcategories: [
-      { name: "Console", slug: "console" },
-      { name: "Gaming PC", slug: "gaming-pc" },
-      { name: "Aksesorë Gaming", slug: "aksesore-gaming" },
-    ],
-  },
-  {
-    name: "SMART",
-    slug: "smart",
-    icon: "wifi",
-    subcategories: [
-      { name: "Smart Home", slug: "smart-home" },
-      { name: "Smart Security", slug: "smart-security" },
-    ],
-  },
-  {
-    name: "Aksesorë",
-    slug: "aksesore",
-    icon: "headphones",
-    subcategories: [
-      { name: "Kufje", slug: "kufje" },
-      { name: "Tastierë", slug: "tastiere" },
-      { name: "Maus", slug: "maus" },
-    ],
-  },
-  {
-    name: "Pjesë për kompjuter",
-    slug: "pjese-per-kompjuter",
-    icon: "cpu",
-    subcategories: [
-      { name: "GPU", slug: "gpu" },
-      { name: "CPU", slug: "cpu" },
-      { name: "RAM", slug: "ram" },
-      { name: "SSD", slug: "ssd" },
-    ],
-  },
-];
+/** Offline fallback (matches `categories.json`). Prefer data from `useCategoryStore`. */
+export const staticCategories: Category[] = categoriesJson as Category[];
+
+/** @deprecated Prefer `useCategoryStore` — kept for gradual migration */
+export const categories = staticCategories;
 
 export const products: Product[] = [
   {
