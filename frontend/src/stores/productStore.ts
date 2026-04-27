@@ -10,6 +10,7 @@ export type BackendProduct = {
   description?: string | null;
   category: string;
   categorySlug: string;
+  subcategorySlugs?: string[] | null;
   price: number;
   oldPrice?: number | null;
   rating: number;
@@ -32,6 +33,7 @@ export function toUiProduct(p: BackendProduct): UiProduct {
     image: p.image ?? p.images?.[0] ?? "",
     category: p.category,
     categorySlug: p.categorySlug,
+    subcategorySlugs: p.subcategorySlugs ?? undefined,
     brand: "—",
     rating: p.rating ?? 0,
     reviewCount: 0,

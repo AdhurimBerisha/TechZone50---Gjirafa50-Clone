@@ -154,7 +154,7 @@ const CategorySidebar = () => {
                     {col.links.map((link) => (
                       <li key={`${col.title}-${link.slug}`}>
                         <Link
-                          to={`/category/${activeCategory.slug}`}
+                          to={`/category/${activeCategory.slug}?sub=${encodeURIComponent(link.slug)}`}
                           className={`block text-sm leading-snug text-muted-foreground transition-colors ${ACCENT_HOVER}`}
                         >
                           {link.name}

@@ -1,26 +1,55 @@
-import { useParams } from "react-router";
-import { useState } from "react";
-import { products } from "@/data/products";
+import { useEffect, useMemo, useState } from "react";
+import { Link, useParams, useSearchParams } from "react-router";
+import { products as staticProducts } from "@/data/products";
 import ProductCard from "@/components/ProductCard";
 import { SlidersHorizontal } from "lucide-react";
 import { useCategoryStore } from "@/stores/categoryStore";
+import { useProductStore } from "@/stores/productStore";
+import {
+  productMatchesSubcategory,
+  resolveSubcategoryLabel,
+} from "@/lib/categorySubFilter";
 
 const CategoryPage = () => {
   const { slug } = useParams();
+  const [searchParams] = useSearchParams();
+  const subSlug = searchParams.get("sub");
+
   const categories = useCategoryStore((s) => s.categories);
+  const { products: fetchedProducts, fetchAllProducts } = useProductStore();
+
+  useEffect(() => {
+    void fetchAllProducts();
+  }, [fetchAllProducts]);
+
+  const allProducts = useMemo(
+    () =>
+      fetchedProducts.length > 0 ? fetchedProducts : staticProducts,
+    [fetchedProducts],
+  );
+
   const [sortBy, setSortBy] = useState("relevant");
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 2000]);
 
   const category = categories.find((c) => c.slug === slug);
+  const subLabel =
+    subSlug && category
+      ? resolveSubcategoryLabel(category, subSlug)
+      : null;
 
-  const filtered =
-    slug === "all" || slug === "new"
-      ? products
-      : products.filter(
-          (p) =>
-            p.categorySlug === slug ||
-            p.category.toLowerCase().includes(slug || ""),
-        );
+  const filtered = useMemo(() => {
+    if (slug === "all" || slug === "new") {
+      return allProducts;
+    }
+    return allProducts.filter((p) => {
+      const inCategory =
+        p.categorySlug === slug ||
+        p.category.toLowerCase().includes(slug || "");
+      if (!inCategory) return false;
+      if (!subSlug || !slug) return true;
+      return productMatchesSubcategory(p, slug, subSlug);
+    });
+  }, [allProducts, slug, subSlug]);
 
   const sorted = [...filtered].sort((a, b) => {
     if (sortBy === "price-asc") return a.price - b.price;
@@ -29,17 +58,39 @@ const CategoryPage = () => {
     return 0;
   });
 
+  const pageTitle =
+    subLabel && category
+      ? `${category.name} — ${subLabel}`
+      : category?.name || "Të gjitha produktet";
+
   return (
     <div className="max-w-[1320px] mx-auto px-4 lg:px-8 py-6">
       {/* Breadcrumb */}
-      <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
-        <a href="/" className="hover:text-primary">
+      <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground mb-4">
+        <Link to="/" className="hover:text-primary">
           Ballina
-        </a>
+        </Link>
         <span>/</span>
-        <span className="text-foreground">
-          {category?.name || slug || "Të gjitha"}
-        </span>
+        {slug && slug !== "all" && slug !== "new" ? (
+          <Link
+            to={`/category/${slug}`}
+            className={
+              subSlug
+                ? "hover:text-primary"
+                : "text-foreground pointer-events-none"
+            }
+          >
+            {category?.name || slug}
+          </Link>
+        ) : (
+          <span className="text-foreground">Të gjitha</span>
+        )}
+        {subSlug && subLabel ? (
+          <>
+            <span>/</span>
+            <span className="text-foreground">{subLabel}</span>
+          </>
+        ) : null}
       </div>
 
       <div className="flex gap-6">
@@ -94,18 +145,30 @@ const CategoryPage = () => {
             </div>
 
             {/* Subcategories */}
-            {category?.subcategories && (
+            {category?.subcategories && slug && (
               <div>
                 <h4 className="text-sm font-medium mb-2">Nën-kategoritë</h4>
                 {category.subcategories.map((sub) => (
-                  <a
+                  <Link
                     key={sub.slug}
-                    href={`/category/${sub.slug}`}
-                    className="block py-1 text-sm text-muted-foreground hover:text-primary"
+                    to={`/category/${slug}?sub=${encodeURIComponent(sub.slug)}`}
+                    className={`block py-1 text-sm hover:text-primary ${
+                      subSlug === sub.slug
+                        ? "text-primary font-medium"
+                        : "text-muted-foreground"
+                    }`}
                   >
                     {sub.name}
-                  </a>
+                  </Link>
                 ))}
+                {subSlug ? (
+                  <Link
+                    to={`/category/${slug}`}
+                    className="mt-2 inline-block text-xs text-muted-foreground hover:text-primary"
+                  >
+                    Pastro filtrin e nën-kategorisë
+                  </Link>
+                ) : null}
               </div>
             )}
           </div>
@@ -114,9 +177,7 @@ const CategoryPage = () => {
         {/* Products Grid */}
         <div className="flex-1">
           <div className="flex items-center justify-between mb-4">
-            <h1 className="text-xl font-semibold">
-              {category?.name || "Të gjitha produktet"}
-            </h1>
+            <h1 className="text-xl font-semibold">{pageTitle}</h1>
             <div className="flex items-center gap-2">
               <span className="text-sm text-muted-foreground">
                 {sorted.length} produkte
@@ -143,8 +204,17 @@ const CategoryPage = () => {
           {sorted.length === 0 && (
             <div className="text-center py-12">
               <p className="text-muted-foreground">
-                Nuk u gjetën produkte për këtë kategori.
+                Nuk u gjetën produkte për këtë kategori
+                {subLabel ? ` (${subLabel})` : ""}.
               </p>
+              {subSlug && slug ? (
+                <Link
+                  to={`/category/${slug}`}
+                  className="mt-3 inline-block text-sm text-primary hover:underline"
+                >
+                  Shiko të gjitha produktet e kësaj kategorie
+                </Link>
+              ) : null}
             </div>
           )}
         </div>

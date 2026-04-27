@@ -9,6 +9,8 @@ export interface Product {
   image: string;
   category: string;
   categorySlug: string;
+  /** Slugs from mega menu / `?sub=` — used for precise subcategory filtering. */
+  subcategorySlugs?: string[];
   brand: string;
   rating: number;
   reviewCount: number;
@@ -56,6 +58,7 @@ export const products: Product[] = [
       "https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?w=400&h=400&fit=crop",
     category: "Kompjuter, Laptop & Monitor",
     categorySlug: "kompjuter-laptop-monitor",
+    subcategorySlugs: ["monitor-fhd"],
     brand: "Gigabyte",
     rating: 4.5,
     reviewCount: 23,
@@ -81,6 +84,7 @@ export const products: Product[] = [
       "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=400&h=400&fit=crop",
     category: "Kompjuter, Laptop & Monitor",
     categorySlug: "kompjuter-laptop-monitor",
+    subcategorySlugs: ["macbook", "laptop-shkolle"],
     brand: "Apple",
     rating: 4.9,
     reviewCount: 156,
@@ -104,6 +108,7 @@ export const products: Product[] = [
       "https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?w=400&h=400&fit=crop",
     category: "Celular, Tablet & Navigim",
     categorySlug: "celular-tablet-navigim",
+    subcategorySlugs: ["android", "smartphone"],
     brand: "Samsung",
     rating: 4.8,
     reviewCount: 89,
@@ -127,6 +132,7 @@ export const products: Product[] = [
       "https://images.unsplash.com/photo-1606144042614-b2417e99c4e3?w=400&h=400&fit=crop",
     category: "Gaming",
     categorySlug: "gaming",
+    subcategorySlugs: ["ps", "console"],
     brand: "Sony",
     rating: 4.7,
     reviewCount: 234,
@@ -147,6 +153,7 @@ export const products: Product[] = [
       "https://images.unsplash.com/photo-1593359677879-a4bb92f829d1?w=400&h=400&fit=crop",
     category: "TV, Audio & Foto",
     categorySlug: "tv-audio-foto",
+    subcategorySlugs: ["tv-oled", "tv-4k"],
     brand: "LG",
     rating: 4.8,
     reviewCount: 67,
@@ -170,6 +177,7 @@ export const products: Product[] = [
       "https://images.unsplash.com/photo-1527814050087-3793815479db?w=400&h=400&fit=crop",
     category: "Aksesorë",
     categorySlug: "aksesore",
+    subcategorySlugs: ["maus", "periferike"],
     brand: "Logitech",
     rating: 4.9,
     reviewCount: 312,
@@ -193,6 +201,7 @@ export const products: Product[] = [
       "https://images.unsplash.com/photo-1591488320449-011701bb6704?w=400&h=400&fit=crop",
     category: "Pjesë për kompjuter",
     categorySlug: "pjese-per-kompjuter",
+    subcategorySlugs: ["gpu"],
     brand: "NVIDIA",
     rating: 4.7,
     reviewCount: 45,
@@ -211,6 +220,7 @@ export const products: Product[] = [
       "https://images.unsplash.com/photo-1695048133142-1a20484d2569?w=400&h=400&fit=crop",
     category: "Celular, Tablet & Navigim",
     categorySlug: "celular-tablet-navigim",
+    subcategorySlugs: ["iphone", "smartphone"],
     brand: "Apple",
     rating: 4.9,
     reviewCount: 178,
@@ -235,6 +245,7 @@ export const products: Product[] = [
       "https://images.unsplash.com/photo-1618366712010-f4ae9c647dcb?w=400&h=400&fit=crop",
     category: "Aksesorë",
     categorySlug: "aksesore",
+    subcategorySlugs: ["kufje-wireless", "kufje-gaming"],
     brand: "SteelSeries",
     rating: 4.6,
     reviewCount: 98,
@@ -258,6 +269,7 @@ export const products: Product[] = [
       "https://images.unsplash.com/photo-1585792180666-f7347c490ee2?w=400&h=400&fit=crop",
     category: "Kompjuter, Laptop & Monitor",
     categorySlug: "kompjuter-laptop-monitor",
+    subcategorySlugs: ["monitor-qhd"],
     brand: "MSI",
     rating: 4.7,
     reviewCount: 56,
@@ -282,6 +294,7 @@ export const products: Product[] = [
       "https://images.unsplash.com/photo-1588872657578-7efd1f1555ed?w=400&h=400&fit=crop",
     category: "Kompjuter, Laptop & Monitor",
     categorySlug: "kompjuter-laptop-monitor",
+    subcategorySlugs: ["laptop-gaming"],
     brand: "Lenovo",
     rating: 4.6,
     reviewCount: 34,
@@ -305,6 +318,7 @@ export const products: Product[] = [
       "https://images.unsplash.com/photo-1541140532154-b024d705b90a?w=400&h=400&fit=crop",
     category: "Aksesorë",
     categorySlug: "aksesore",
+    subcategorySlugs: ["tastiere", "periferike"],
     brand: "Razer",
     rating: 4.5,
     reviewCount: 72,
