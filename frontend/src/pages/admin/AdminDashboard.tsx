@@ -1,6 +1,5 @@
 import { useEffect, useMemo } from "react";
 import { Package, ShoppingCart, Users, DollarSign } from "lucide-react";
-import { products } from "@/data/products";
 import { useAdminStore } from "@/stores/adminStore";
 
 function formatCount(n: number) {
@@ -13,7 +12,8 @@ const statusColors: Record<string, string> = {
   SHIPPED: "bg-purple-100 text-purple-700",
   PENDING: "bg-yellow-100 text-yellow-700",
   CONFIRMED: "bg-indigo-100 text-indigo-700",
-  CANCELED: "bg-red-100 text-red-700",
+  CANCELLED: "bg-red-100 text-red-700",
+  REFUNDED: "bg-red-100 text-red-700",
 };
 
 const statusLabels: Record<string, string> = {
@@ -22,23 +22,27 @@ const statusLabels: Record<string, string> = {
   SHIPPED: "Dërguar",
   PENDING: "Në pritje",
   CONFIRMED: "Konfirmuar",
-  CANCELED: "Anuluar",
+  CANCELLED: "Anuluar",
+  REFUNDED: "Rimbursuar",
 };
 
 const AdminDashboard = () => {
   const fetchDashboardStats = useAdminStore((s) => s.fetchDashboardStats);
   const fetchOrders = useAdminStore((s) => s.fetchOrders);
+  const fetchTopSellingProducts = useAdminStore((s) => s.fetchTopSellingProducts);
   const totalProducts = useAdminStore((s) => s.totalProducts);
   const totalUsers = useAdminStore((s) => s.totalUsers);
   const totalOrders = useAdminStore((s) => s.totalOrders);
   const recentOrders = useAdminStore((s) => s.recentOrders);
+  const topProducts = useAdminStore((s) => s.topProducts);
   const statsLoading = useAdminStore((s) => s.isLoading);
   const statsError = useAdminStore((s) => s.error);
 
   useEffect(() => {
     void fetchDashboardStats();
     void fetchOrders();
-  }, [fetchDashboardStats, fetchOrders]);
+    void fetchTopSellingProducts();
+  }, [fetchDashboardStats, fetchOrders, fetchTopSellingProducts]);
 
   const stats = useMemo(
     () => [
@@ -166,19 +170,21 @@ const AdminDashboard = () => {
         </div>
         <div className="p-5">
           <div className="space-y-4">
-            {products.slice(0, 5).map((p) => (
+            {topProducts.map((p) => (
               <div key={p.id} className="flex items-center gap-4">
                 <img
-                  src={p.image}
+                  src={p.image || "https://via.placeholder.com/48?text=No+Image"}
                   alt={p.name}
                   className="w-12 h-12 object-contain rounded"
                 />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium truncate">{p.name}</p>
-                  <p className="text-xs text-muted-foreground">{p.brand}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {p.category} - {formatCount(p.unitsSold)} shitje
+                  </p>
                 </div>
                 <span className="text-sm font-bold text-primary">
-                  {p.price.toFixed(2)}€
+                  {p.revenue.toFixed(2)}€
                 </span>
               </div>
             ))}

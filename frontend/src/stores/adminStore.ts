@@ -15,6 +15,7 @@ interface AdminState {
   recentProducts: BackendProduct[];
   recentUsers: User[];
   recentRevenue: number[];
+  topProducts: TopProduct[];
 }
 
 export type CreateProductPayload = {
@@ -38,6 +39,7 @@ interface AdminActions {
   fetchAllUsers: () => Promise<void>;
   fetchOrders: () => Promise<void>;
   fetchDashboardStats: () => Promise<void>;
+  fetchTopSellingProducts: () => Promise<void>;
   createProduct: (
     payload: CreateProductPayload,
   ) => Promise<{ ok: true } | { ok: false; error: string }>;
@@ -71,6 +73,15 @@ interface User {
   updatedAt: string;
 }
 
+interface TopProduct {
+  id: string;
+  name: string;
+  image: string | null;
+  category: string;
+  unitsSold: number;
+  revenue: number;
+}
+
 const initialState: AdminState = {
   isLoading: false,
   error: null,
@@ -82,6 +93,7 @@ const initialState: AdminState = {
   recentProducts: [],
   recentUsers: [],
   recentRevenue: [],
+  topProducts: [],
 };
 
 export const useAdminStore = create<AdminStore>()(
@@ -174,6 +186,36 @@ export const useAdminStore = create<AdminStore>()(
             error:
               axiosError.response?.data?.error ??
               "Failed to load dashboard statistics",
+            isLoading: false,
+          });
+        }
+      },
+      fetchTopSellingProducts: async () => {
+        try {
+          set({ isLoading: true, error: null });
+          const res = await api.get<
+            { success: true; topProducts: TopProduct[] } | { error: string }
+          >("/api/admin/top-products");
+          const data = res.data;
+          if (
+            "success" in data &&
+            data.success === true &&
+            "topProducts" in data
+          ) {
+            set({
+              topProducts: data.topProducts,
+              isLoading: false,
+              error: null,
+            });
+          } else {
+            set({ error: "Failed to fetch top products", isLoading: false });
+          }
+        } catch (error) {
+          console.error("Error fetching top products:", error);
+          const axiosError = error as AxiosError<{ error?: string }>;
+          set({
+            error:
+              axiosError.response?.data?.error ?? "Failed to fetch top products",
             isLoading: false,
           });
         }

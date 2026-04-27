@@ -330,6 +330,89 @@ const toggleProductAvailability = async (req: Request, res: Response) => {
   }
 };
 
+const getTopSellingProducts = async (req: Request, res: Response) => {
+  try {
+    const grouped = await prisma.orderItem.groupBy({
+      by: ["productId"],
+      _sum: {
+        quantity: true,
+      },
+      orderBy: {
+        _sum: {
+          quantity: "desc",
+        },
+      },
+      take: 5,
+    });
+
+    const productIds = grouped.map((item) => item.productId);
+
+    if (productIds.length === 0) {
+      return res.status(200).json({ success: true, topProducts: [] });
+    }
+
+    const [products, orderItems] = await Promise.all([
+      prisma.product.findMany({
+        where: {
+          id: {
+            in: productIds,
+          },
+        },
+        select: {
+          id: true,
+          name: true,
+          image: true,
+          category: true,
+        },
+      }),
+      prisma.orderItem.findMany({
+        where: {
+          productId: {
+            in: productIds,
+          },
+        },
+        select: {
+          productId: true,
+          quantity: true,
+          price: true,
+        },
+      }),
+    ]);
+
+    const productsById = new Map(products.map((product) => [product.id, product]));
+    const revenueByProductId = orderItems.reduce<Record<string, number>>(
+      (acc, item) => {
+        acc[item.productId] = (acc[item.productId] ?? 0) + item.quantity * item.price;
+        return acc;
+      },
+      {},
+    );
+
+    const topProducts = grouped
+      .map((item) => {
+        const product = productsById.get(item.productId);
+        if (!product) {
+          return null;
+        }
+
+        return {
+          id: product.id,
+          name: product.name,
+          image: product.image,
+          category: product.category,
+          unitsSold: item._sum.quantity ?? 0,
+          revenue: revenueByProductId[product.id] ?? 0,
+        };
+      })
+      .filter((product): product is NonNullable<typeof product> => product !== null);
+
+    return res.status(200).json({ success: true, topProducts });
+  } catch (error) {
+    console.error("Error fetching topProducts", error);
+    return res.status(500).json({ error: "Failed to fetch top products" });
+  }
+};
+
 export {
   getAdminDashboard,
   getAllUsers,
@@ -340,4 +423,5 @@ export {
   updateProduct,
   deleteProduct,
   toggleProductAvailability,
+  getTopSellingProducts,
 };
