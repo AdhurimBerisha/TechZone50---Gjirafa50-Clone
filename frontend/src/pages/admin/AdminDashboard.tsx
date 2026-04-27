@@ -54,14 +54,17 @@ const statusColors: Record<string, string> = {
 
 const AdminDashboard = () => {
   const fetchDashboardStats = useAdminStore((s) => s.fetchDashboardStats);
+  const fetchOrders = useAdminStore((s) => s.fetchOrders);
   const totalProducts = useAdminStore((s) => s.totalProducts);
   const totalUsers = useAdminStore((s) => s.totalUsers);
+  const totalOrders = useAdminStore((s) => s.totalOrders);
   const statsLoading = useAdminStore((s) => s.isLoading);
   const statsError = useAdminStore((s) => s.error);
 
   useEffect(() => {
     void fetchDashboardStats();
-  }, [fetchDashboardStats]);
+    void fetchOrders();
+  }, [fetchDashboardStats, fetchOrders]);
 
   const stats = useMemo(
     () => [
@@ -73,7 +76,7 @@ const AdminDashboard = () => {
       },
       {
         label: "Porosi sot",
-        value: "24",
+        value: statsLoading ? "…" : formatCount(totalOrders),
         icon: ShoppingCart,
         color: "bg-green-500",
       },
@@ -90,7 +93,7 @@ const AdminDashboard = () => {
         color: "bg-primary",
       },
     ],
-    [statsLoading, totalProducts, totalUsers],
+    [statsLoading, totalProducts, totalOrders, totalUsers],
   );
 
   return (
