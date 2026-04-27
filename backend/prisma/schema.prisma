@@ -80,15 +80,16 @@ model Category {
 }
 
 model Product {
-  id           String    @id @default(cuid())
-  name         String
-  slug         String    @unique
-  description  String?
-  category     String
-  categorySlug String
-  categoryId   String?
-  categoryRef  Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
-  price        Float
+  id                 String    @id @default(cuid())
+  name               String
+  slug               String    @unique
+  description        String?
+  category           String
+  categorySlug       String
+  categoryId         String?
+  categoryRef        Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  subcategorySlugs   String[]  @default([])
+  price              Float
   oldPrice     Float?
   rating       Float     @default(0)
   image        String?

@@ -1,6 +1,67 @@
 import type { Request, Response } from "express";
 import { prisma } from "../lib/prisma";
 
+type MegaLink = { slug?: string };
+type MegaColumn = { links?: MegaLink[] };
+type MegaShape = { columns?: MegaColumn[] };
+type SubcatItem = { slug?: string };
+
+function parseSubcategorySlugsFromBody(body: unknown): string[] {
+  if (body === undefined || body === null) return [];
+  if (!Array.isArray(body)) return [];
+  return body
+    .filter((x): x is string => typeof x === "string")
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
+async function allowedSubSlugsForCategorySlug(
+  categorySlug: string,
+): Promise<Set<string>> {
+  const set = new Set<string>();
+  const row = await prisma.category.findUnique({
+    where: { slug: categorySlug },
+    select: { subcategories: true, megaMenu: true },
+  });
+  if (!row) return set;
+  const subs = row.subcategories as unknown;
+  if (Array.isArray(subs)) {
+    for (const item of subs) {
+      if (
+        item &&
+        typeof item === "object" &&
+        "slug" in item &&
+        typeof (item as SubcatItem).slug === "string"
+      ) {
+        set.add((item as SubcatItem).slug!);
+      }
+    }
+  }
+  const mega = row.megaMenu as MegaShape | null;
+  if (mega?.columns && Array.isArray(mega.columns)) {
+    for (const col of mega.columns) {
+      if (!col?.links || !Array.isArray(col.links)) continue;
+      for (const link of col.links) {
+        if (link?.slug && typeof link.slug === "string") set.add(link.slug);
+      }
+    }
+  }
+  return set;
+}
+
+async function validateSubcategorySlugsForCategory(
+  categorySlug: string,
+  slugs: string[],
+): Promise<{ ok: true } | { ok: false; invalid: string[] }> {
+  if (slugs.length === 0) return { ok: true };
+  const allowed = await allowedSubSlugsForCategorySlug(categorySlug);
+  if (allowed.size === 0) {
+    return slugs.length ? { ok: false, invalid: [...slugs] } : { ok: true };
+  }
+  const invalid = slugs.filter((s) => !allowed.has(s));
+  return invalid.length ? { ok: false, invalid } : { ok: true };
+}
+
 const getAdminDashboard = async (req: Request, res: Response) => {};
 
 const getAllUsers = async (req: Request, res: Response) => {
@@ -39,6 +100,7 @@ const getAllProducts = async (req: Request, res: Response) => {
         stock: true,
         isFeatured: true,
         isActive: true,
+        subcategorySlugs: true,
         createdAt: true,
         updatedAt: true,
       },
@@ -85,6 +147,7 @@ const createProduct = async (req: Request, res: Response) => {
     stock,
     isFeatured,
     isActive,
+    subcategorySlugs: subcategorySlugsBody,
   } = req.body;
 
   if (!name || !slug || !category || !categorySlug || price === undefined) {
@@ -126,7 +189,19 @@ const createProduct = async (req: Request, res: Response) => {
       ? [images]
       : [];
 
+  const subcategorySlugs = parseSubcategorySlugsFromBody(subcategorySlugsBody);
+
   try {
+    const subCheck = await validateSubcategorySlugsForCategory(
+      String(categorySlug),
+      subcategorySlugs,
+    );
+    if (!subCheck.ok) {
+      return res.status(400).json({
+        error: `Nën-kategori të pavlefshme: ${subCheck.invalid.join(", ")}`,
+      });
+    }
+
     const categoryRow = await prisma.category.findUnique({
       where: { slug: String(categorySlug) },
     });
@@ -139,6 +214,7 @@ const createProduct = async (req: Request, res: Response) => {
         category,
         categorySlug,
         categoryId: categoryRow?.id ?? null,
+        subcategorySlugs,
         price: parsedPrice,
         oldPrice: parsedOldPrice,
         rating: parsedRating ?? 0,
@@ -181,6 +257,7 @@ const updateProduct = async (req: Request, res: Response) => {
     stock,
     isFeatured,
     isActive,
+    subcategorySlugs: subcategorySlugsBody,
   } = req.body;
 
   if (!productId) {
@@ -235,7 +312,7 @@ const updateProduct = async (req: Request, res: Response) => {
   }
 
   try {
-    const updateData: any = {};
+    const updateData: Record<string, unknown> = {};
 
     if (name !== undefined) updateData.name = name;
     if (slug !== undefined) updateData.slug = slug;
@@ -256,6 +333,33 @@ const updateProduct = async (req: Request, res: Response) => {
     if (parsedStock !== undefined) updateData.stock = parsedStock;
     if (isFeatured !== undefined) updateData.isFeatured = Boolean(isFeatured);
     if (isActive !== undefined) updateData.isActive = Boolean(isActive);
+
+    if (subcategorySlugsBody !== undefined) {
+      const subSlugs = parseSubcategorySlugsFromBody(subcategorySlugsBody);
+      const existing = await prisma.product.findUnique({
+        where: { id: productId },
+        select: { categorySlug: true },
+      });
+      const slugForSubs =
+        categorySlug !== undefined
+          ? String(categorySlug)
+          : (existing?.categorySlug ?? "");
+      if (!slugForSubs) {
+        return res.status(400).json({
+          error: "Cannot set subcategories without a category slug on the product",
+        });
+      }
+      const subCheck = await validateSubcategorySlugsForCategory(
+        slugForSubs,
+        subSlugs,
+      );
+      if (!subCheck.ok) {
+        return res.status(400).json({
+          error: `Nën-kategori të pavlefshme: ${subCheck.invalid.join(", ")}`,
+        });
+      }
+      updateData.subcategorySlugs = subSlugs;
+    }
 
     const product = await prisma.product.update({
       where: { id: productId },
