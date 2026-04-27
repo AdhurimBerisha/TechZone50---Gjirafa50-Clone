@@ -7,49 +7,22 @@ function formatCount(n: number) {
   return n.toLocaleString("sq-AL");
 }
 
-const recentOrders = [
-  {
-    id: "ORD-001",
-    customer: "Arben Krasniqi",
-    total: "249.00€",
-    status: "Përfunduar",
-    date: "05.04.2026",
-  },
-  {
-    id: "ORD-002",
-    customer: "Drita Berisha",
-    total: "1,199.00€",
-    status: "Në proces",
-    date: "05.04.2026",
-  },
-  {
-    id: "ORD-003",
-    customer: "Faton Gashi",
-    total: "449.00€",
-    status: "Dërguar",
-    date: "04.04.2026",
-  },
-  {
-    id: "ORD-004",
-    customer: "Liridona Hoxha",
-    total: "89.00€",
-    status: "Përfunduar",
-    date: "04.04.2026",
-  },
-  {
-    id: "ORD-005",
-    customer: "Besnik Mustafa",
-    total: "599.00€",
-    status: "Në pritje",
-    date: "03.04.2026",
-  },
-];
-
 const statusColors: Record<string, string> = {
-  Përfunduar: "bg-green-100 text-green-700",
-  "Në proces": "bg-blue-100 text-blue-700",
-  Dërguar: "bg-purple-100 text-purple-700",
-  "Në pritje": "bg-yellow-100 text-yellow-700",
+  DELIVERED: "bg-green-100 text-green-700",
+  PROCESSING: "bg-blue-100 text-blue-700",
+  SHIPPED: "bg-purple-100 text-purple-700",
+  PENDING: "bg-yellow-100 text-yellow-700",
+  CONFIRMED: "bg-indigo-100 text-indigo-700",
+  CANCELED: "bg-red-100 text-red-700",
+};
+
+const statusLabels: Record<string, string> = {
+  DELIVERED: "Përfunduar",
+  PROCESSING: "Në proces",
+  SHIPPED: "Dërguar",
+  PENDING: "Në pritje",
+  CONFIRMED: "Konfirmuar",
+  CANCELED: "Anuluar",
 };
 
 const AdminDashboard = () => {
@@ -58,6 +31,7 @@ const AdminDashboard = () => {
   const totalProducts = useAdminStore((s) => s.totalProducts);
   const totalUsers = useAdminStore((s) => s.totalUsers);
   const totalOrders = useAdminStore((s) => s.totalOrders);
+  const recentOrders = useAdminStore((s) => s.recentOrders);
   const statsLoading = useAdminStore((s) => s.isLoading);
   const statsError = useAdminStore((s) => s.error);
 
@@ -156,25 +130,27 @@ const AdminDashboard = () => {
               </tr>
             </thead>
             <tbody>
-              {recentOrders.map((order) => (
+              {recentOrders.slice(0, 5).map((order) => (
                 <tr
                   key={order.id}
                   className="border-b border-border last:border-b-0 hover:bg-muted/30"
                 >
                   <td className="px-5 py-3 text-sm font-medium">{order.id}</td>
-                  <td className="px-5 py-3 text-sm">{order.customer}</td>
+                  <td className="px-5 py-3 text-sm">
+                    {order.user?.name || "Pa emër"}
+                  </td>
                   <td className="px-5 py-3 text-sm font-medium">
-                    {order.total}
+                    {order.total.toFixed(2)}€
                   </td>
                   <td className="px-5 py-3">
                     <span
-                      className={`text-xs px-2 py-1 rounded-full font-medium ${statusColors[order.status] || ""}`}
+                      className={`text-xs px-2 py-1 rounded-full font-medium ${statusColors[order.status] || "bg-gray-100 text-gray-700"}`}
                     >
-                      {order.status}
+                      {statusLabels[order.status] || order.status}
                     </span>
                   </td>
                   <td className="px-5 py-3 text-sm text-muted-foreground">
-                    {order.date}
+                    {new Date(order.createdAt).toLocaleDateString("sq-AL")}
                   </td>
                 </tr>
               ))}
