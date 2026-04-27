@@ -1,12 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
 import { Plus, Edit, Trash2, Search, Loader2 } from "lucide-react";
 import { useAdminStore } from "@/stores/adminStore";
-import { toUiProduct } from "@/stores/productStore";
+import { toUiProduct, type BackendProduct } from "@/stores/productStore";
 import { AddProductDialog } from "@/components/admin/AddProductDialog";
+import { EditProductDialog } from "@/components/admin/EditProductDialog";
 
 const AdminProducts = () => {
   const [search, setSearch] = useState("");
   const [addOpen, setAddOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [editing, setEditing] = useState<BackendProduct | null>(null);
 
   const fetchAllProducts = useAdminStore((s) => s.fetchAllProducts);
   const isLoading = useAdminStore((s) => s.isLoading);
@@ -64,6 +67,19 @@ const AdminProducts = () => {
       </div>
 
       <AddProductDialog open={addOpen} onOpenChange={setAddOpen} />
+
+      {editing ? (
+        <EditProductDialog
+          open={editOpen}
+          onOpenChange={(next) => {
+            if (!next) {
+              setEditOpen(false);
+              setEditing(null);
+            }
+          }}
+          product={editing}
+        />
+      ) : null}
 
       {error ? (
         <p className="text-sm text-destructive" role="alert">
@@ -136,7 +152,18 @@ const AdminProducts = () => {
                   </td>
                   <td className="px-5 py-3">
                     <div className="flex items-center gap-2">
-                      <button className="p-1.5 rounded hover:bg-muted text-muted-foreground hover:text-primary">
+                      <button
+                        type="button"
+                        title="Ndrysho"
+                        className="p-1.5 rounded hover:bg-muted text-muted-foreground hover:text-primary"
+                        onClick={() => {
+                          const bp = recentProducts.find((x) => x.id === p.id);
+                          if (bp) {
+                            setEditing(bp);
+                            setEditOpen(true);
+                          }
+                        }}
+                      >
                         <Edit className="h-4 w-4" />
                       </button>
                       <button className="p-1.5 rounded hover:bg-muted text-muted-foreground hover:text-destructive">
