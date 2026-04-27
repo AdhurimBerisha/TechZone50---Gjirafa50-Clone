@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Loader2 } from "lucide-react";
 import {
   Dialog,
@@ -15,6 +15,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useAdminStore } from "@/stores/adminStore";
 import { useCategoryStore } from "@/stores/categoryStore";
 import type { BackendProduct } from "@/stores/productStore";
+import { subcategoryOptionsForCategory } from "@/lib/adminSubcategoryOptions";
+import { ProductSubcategoryPicker } from "@/components/admin/ProductSubcategoryPicker";
 
 function slugifyName(name: string): string {
   const base = name
@@ -55,6 +57,22 @@ export function EditProductDialog({
   const [isActive, setIsActive] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [subSlugs, setSubSlugs] = useState<string[]>([]);
+
+  const selectedCategory = useMemo(
+    () => categories.find((c) => c.slug === categorySlug),
+    [categories, categorySlug],
+  );
+  const subOptions = useMemo(
+    () => subcategoryOptionsForCategory(selectedCategory),
+    [selectedCategory],
+  );
+
+  useEffect(() => {
+    setSubSlugs((prev) =>
+      prev.filter((s) => subOptions.some((o) => o.slug === s)),
+    );
+  }, [categorySlug, subOptions]);
 
   const hydrateFromProduct = useCallback((p: BackendProduct) => {
     setName(p.name);
@@ -69,6 +87,11 @@ export function EditProductDialog({
     setDescription(p.description ?? "");
     setIsFeatured(Boolean(p.isFeatured));
     setIsActive(p.isActive !== false);
+    setSubSlugs(
+      Array.isArray(p.subcategorySlugs)
+        ? p.subcategorySlugs.filter((s) => typeof s === "string")
+        : [],
+    );
     setFormError(null);
     setSubmitting(false);
   }, []);
@@ -160,6 +183,7 @@ export function EditProductDialog({
       stock: parsedStock,
       isFeatured,
       isActive,
+      subcategorySlugs: subSlugs,
     };
 
     setSubmitting(true);
@@ -239,6 +263,17 @@ export function EditProductDialog({
                   </option>
                 ))}
               </select>
+            </div>
+
+            <div className="grid gap-2">
+              <Label>Nën-kategoritë (filtri mega-menu)</Label>
+              <ProductSubcategoryPicker
+                idPrefix="admin-edit-sub"
+                options={subOptions}
+                value={subSlugs}
+                onChange={setSubSlugs}
+                disabled={submitting}
+              />
             </div>
 
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

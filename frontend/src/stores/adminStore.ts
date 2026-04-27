@@ -32,6 +32,8 @@ export type CreateProductPayload = {
   stock?: number;
   isFeatured?: boolean;
   isActive?: boolean;
+  /** Slugs matching mega menu / `?sub=` for the chosen category */
+  subcategorySlugs?: string[];
 };
 
 /** Body for `PUT /api/admin/products/:id` — same fields as create; all sent on save. */
