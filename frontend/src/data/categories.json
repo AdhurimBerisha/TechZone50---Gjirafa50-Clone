@@ -1,0 +1,316 @@
+[
+  {
+    "name": "Kompjuter, Laptop & Monitor",
+    "slug": "kompjuter-laptop-monitor",
+    "icon": "monitor",
+    "subcategories": [
+      { "name": "Desktop PC", "slug": "desktop-pc" },
+      { "name": "Laptop", "slug": "laptop" },
+      { "name": "Monitor", "slug": "monitor" },
+      { "name": "All-in-One", "slug": "all-in-one" }
+    ],
+    "megaMenu": {
+      "columns": [
+        {
+          "title": "Kompjuter",
+          "links": [
+            { "name": "Desktop PC", "slug": "desktop-pc" },
+            { "name": "Mini PC & NUC", "slug": "mini-pc" },
+            { "name": "All-in-One", "slug": "all-in-one" },
+            { "name": "Workstation", "slug": "workstation" }
+          ],
+          "showMore": true
+        },
+        {
+          "title": "Laptop",
+          "links": [
+            { "name": "Gaming", "slug": "laptop-gaming" },
+            { "name": "Për biznes", "slug": "laptop-biznes" },
+            { "name": "Për shkollë", "slug": "laptop-shkolle" },
+            { "name": "2-in-1 & Convertible", "slug": "2-in-1" }
+          ],
+          "showMore": true
+        },
+        {
+          "title": "Monitor",
+          "links": [
+            { "name": "FHD & Full HD", "slug": "monitor-fhd" },
+            { "name": "QHD & WQHD", "slug": "monitor-qhd" },
+            { "name": "4K & UHD", "slug": "monitor-4k" },
+            { "name": "Curved & Ultrawide", "slug": "monitor-curved" }
+          ],
+          "showMore": true
+        },
+        {
+          "title": "Gjirafa50 Builds",
+          "links": [
+            { "name": "Gaming PC të gatshëm", "slug": "prebuilt-gaming" },
+            { "name": "Konfigurator PC", "slug": "konfigurator" }
+          ]
+        },
+        {
+          "title": "Apple",
+          "links": [
+            { "name": "MacBook", "slug": "macbook" },
+            { "name": "iMac & Mac mini", "slug": "imac-mac-mini" },
+            { "name": "Mac Studio", "slug": "mac-studio" }
+          ]
+        },
+        {
+          "title": "Server",
+          "links": [
+            { "name": "Rack server", "slug": "rack" },
+            { "name": "Tower server", "slug": "tower" },
+            { "name": "Aksesorë server", "slug": "server-aksesore" }
+          ]
+        }
+      ],
+      "promoImage": "https://picsum.photos/id/48/416/520"
+    }
+  },
+  {
+    "name": "Celular, Tablet & Navigim",
+    "slug": "celular-tablet-navigim",
+    "icon": "smartphone",
+    "subcategories": [
+      { "name": "Smartphone", "slug": "smartphone" },
+      { "name": "Tablet", "slug": "tablet" },
+      { "name": "Smartwatch", "slug": "smartwatch" }
+    ],
+    "megaMenu": {
+      "columns": [
+        {
+          "title": "Smartphone",
+          "links": [
+            { "name": "Android", "slug": "android" },
+            { "name": "iPhone", "slug": "iphone" },
+            { "name": "Telefona të mbrojtur", "slug": "rugged" },
+            { "name": "Dual SIM", "slug": "dual-sim" }
+          ],
+          "showMore": true
+        },
+        {
+          "title": "Tablet",
+          "links": [
+            { "name": "iPad", "slug": "ipad" },
+            { "name": "Android tablet", "slug": "android-tablet" },
+            { "name": "Me stylus", "slug": "stylus" }
+          ]
+        },
+        {
+          "title": "Navigim & wearable",
+          "links": [
+            { "name": "Smartwatch", "slug": "smartwatch" },
+            { "name": "GPS & navigim", "slug": "gps" },
+            { "name": "Aksesorë celulari", "slug": "aksesore-celular" }
+          ],
+          "showMore": true
+        }
+      ],
+      "promoImage": "https://picsum.photos/id/3/416/520"
+    }
+  },
+  {
+    "name": "TV, Audio & Foto",
+    "slug": "tv-audio-foto",
+    "icon": "tv",
+    "subcategories": [
+      { "name": "Televizor", "slug": "televizor" },
+      { "name": "Soundbar", "slug": "soundbar" },
+      { "name": "Kamera", "slug": "kamera" }
+    ],
+    "megaMenu": {
+      "columns": [
+        {
+          "title": "TV & video",
+          "links": [
+            { "name": "Televizor OLED & QLED", "slug": "tv-oled" },
+            { "name": "4K & 8K", "slug": "tv-4k" },
+            { "name": "Projektorë", "slug": "projektor" },
+            { "name": "TV Box & streaming", "slug": "streaming" }
+          ],
+          "showMore": true
+        },
+        {
+          "title": "Audio",
+          "links": [
+            { "name": "Soundbar", "slug": "soundbar" },
+            { "name": "Hi-Fi & stereo", "slug": "hifi" },
+            { "name": "Kufje & mikrofon", "slug": "audio-kufje" }
+          ]
+        },
+        {
+          "title": "Foto & kreativ",
+          "links": [
+            { "name": "Kamera DSLR & mirrorless", "slug": "kamera" },
+            { "name": "Objektiva", "slug": "objektiva" },
+            { "name": "Dronë", "slug": "dron" }
+          ],
+          "showMore": true
+        }
+      ],
+      "promoImage": "https://picsum.photos/id/39/416/520"
+    }
+  },
+  {
+    "name": "Gaming",
+    "slug": "gaming",
+    "icon": "gamepad-2",
+    "subcategories": [
+      { "name": "Console", "slug": "console" },
+      { "name": "Gaming PC", "slug": "gaming-pc" },
+      { "name": "Aksesorë Gaming", "slug": "aksesore-gaming" }
+    ],
+    "megaMenu": {
+      "columns": [
+        {
+          "title": "Console",
+          "links": [
+            { "name": "PlayStation", "slug": "ps" },
+            { "name": "Xbox", "slug": "xbox" },
+            { "name": "Nintendo", "slug": "nintendo" },
+            { "name": "Lojëra & DLC", "slug": "lojera" }
+          ],
+          "showMore": true
+        },
+        {
+          "title": "Gaming PC",
+          "links": [
+            { "name": "Desktop gaming", "slug": "gaming-pc" },
+            { "name": "Laptop gaming", "slug": "laptop-gaming" },
+            { "name": "Monitor gaming", "slug": "monitor-gaming" }
+          ]
+        },
+        {
+          "title": "Aksesorë",
+          "links": [
+            { "name": "Karrige gaming", "slug": "karrige" },
+            { "name": "Tastierë & maus", "slug": "periferike" },
+            { "name": "Kufje gaming", "slug": "kufje-gaming" }
+          ],
+          "showMore": true
+        }
+      ],
+      "promoImage": "https://picsum.photos/id/96/416/520"
+    }
+  },
+  {
+    "name": "SMART",
+    "slug": "smart",
+    "icon": "wifi",
+    "subcategories": [
+      { "name": "Smart Home", "slug": "smart-home" },
+      { "name": "Smart Security", "slug": "smart-security" }
+    ],
+    "megaMenu": {
+      "columns": [
+        {
+          "title": "Smart home",
+          "links": [
+            { "name": "Ndriçim smart", "slug": "ndricim" },
+            { "name": "Termostat & klima", "slug": "klima" },
+            { "name": "Asistentë zanorë", "slug": "asistent" }
+          ],
+          "showMore": true
+        },
+        {
+          "title": "Siguri",
+          "links": [
+            { "name": "Kamera smart", "slug": "kamera-smart" },
+            { "name": "Video derë", "slug": "video-dere" },
+            { "name": "Sensorë & alarme", "slug": "sensor" }
+          ]
+        },
+        {
+          "title": "Rrjet & lidhshmëri",
+          "links": [
+            { "name": "Router & mesh", "slug": "router" },
+            { "name": "IoT & hub", "slug": "hub" }
+          ]
+        }
+      ],
+      "promoImage": "https://picsum.photos/id/180/416/520"
+    }
+  },
+  {
+    "name": "Aksesorë",
+    "slug": "aksesore",
+    "icon": "headphones",
+    "subcategories": [
+      { "name": "Kufje", "slug": "kufje" },
+      { "name": "Tastierë", "slug": "tastiere" },
+      { "name": "Maus", "slug": "maus" }
+    ],
+    "megaMenu": {
+      "columns": [
+        {
+          "title": "Audio",
+          "links": [
+            { "name": "Kufje me kabllo", "slug": "kufje-kabllo" },
+            { "name": "Kufje wireless", "slug": "kufje-wireless" },
+            { "name": "Mikrofonë", "slug": "mikrofon" }
+          ],
+          "showMore": true
+        },
+        {
+          "title": "Hyrje & dalje",
+          "links": [
+            { "name": "Tastierë", "slug": "tastiere" },
+            { "name": "Maus & pad", "slug": "maus" },
+            { "name": "Webcam", "slug": "webcam" }
+          ]
+        },
+        {
+          "title": "Ruajtje & energji",
+          "links": [
+            { "name": "USB & hub", "slug": "usb-hub" },
+            { "name": "Bateri & karikues", "slug": "karikues" }
+          ]
+        }
+      ],
+      "promoImage": "https://picsum.photos/id/60/416/520"
+    }
+  },
+  {
+    "name": "Pjesë për kompjuter",
+    "slug": "pjese-per-kompjuter",
+    "icon": "cpu",
+    "subcategories": [
+      { "name": "GPU", "slug": "gpu" },
+      { "name": "CPU", "slug": "cpu" },
+      { "name": "RAM", "slug": "ram" },
+      { "name": "SSD", "slug": "ssd" }
+    ],
+    "megaMenu": {
+      "columns": [
+        {
+          "title": "Procesorë & grafië",
+          "links": [
+            { "name": "CPU", "slug": "cpu" },
+            { "name": "GPU & karta video", "slug": "gpu" },
+            { "name": "Cooler & pastë termike", "slug": "cooler" }
+          ],
+          "showMore": true
+        },
+        {
+          "title": "Memorie & ruajtje",
+          "links": [
+            { "name": "RAM", "slug": "ram" },
+            { "name": "SSD & HDD", "slug": "ssd" },
+            { "name": "Kuti & PSU", "slug": "psu" }
+          ]
+        },
+        {
+          "title": "Bord & ndërtim",
+          "links": [
+            { "name": "Motherboard", "slug": "motherboard" },
+            { "name": "Kuti PC", "slug": "kuti" },
+            { "name": "Kablla & aksesorë", "slug": "kablla" }
+          ],
+          "showMore": true
+        }
+      ],
+      "promoImage": "https://picsum.photos/id/201/416/520"
+    }
+  }
+]

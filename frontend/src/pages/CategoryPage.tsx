@@ -1,11 +1,13 @@
 import { useParams } from "react-router";
 import { useState } from "react";
-import { products, categories } from "@/data/products";
+import { products } from "@/data/products";
 import ProductCard from "@/components/ProductCard";
 import { SlidersHorizontal } from "lucide-react";
+import { useCategoryStore } from "@/stores/categoryStore";
 
 const CategoryPage = () => {
   const { slug } = useParams();
+  const categories = useCategoryStore((s) => s.categories);
   const [sortBy, setSortBy] = useState("relevant");
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 2000]);
 

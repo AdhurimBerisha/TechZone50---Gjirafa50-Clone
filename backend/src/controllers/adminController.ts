@@ -127,6 +127,10 @@ const createProduct = async (req: Request, res: Response) => {
       : [];
 
   try {
+    const categoryRow = await prisma.category.findUnique({
+      where: { slug: String(categorySlug) },
+    });
+
     const product = await prisma.product.create({
       data: {
         name,
@@ -134,6 +138,7 @@ const createProduct = async (req: Request, res: Response) => {
         description,
         category,
         categorySlug,
+        categoryId: categoryRow?.id ?? null,
         price: parsedPrice,
         oldPrice: parsedOldPrice,
         rating: parsedRating ?? 0,
@@ -236,7 +241,13 @@ const updateProduct = async (req: Request, res: Response) => {
     if (slug !== undefined) updateData.slug = slug;
     if (description !== undefined) updateData.description = description;
     if (category !== undefined) updateData.category = category;
-    if (categorySlug !== undefined) updateData.categorySlug = categorySlug;
+    if (categorySlug !== undefined) {
+      updateData.categorySlug = categorySlug;
+      const cat = await prisma.category.findUnique({
+        where: { slug: String(categorySlug) },
+      });
+      updateData.categoryId = cat?.id ?? null;
+    }
     if (parsedPrice !== undefined) updateData.price = parsedPrice;
     if (parsedOldPrice !== undefined) updateData.oldPrice = parsedOldPrice;
     if (parsedRating !== undefined) updateData.rating = parsedRating;

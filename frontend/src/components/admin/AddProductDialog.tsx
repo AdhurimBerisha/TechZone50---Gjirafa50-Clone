@@ -12,8 +12,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import { categories } from "@/data/products";
 import { useAdminStore } from "@/stores/adminStore";
+import { useCategoryStore } from "@/stores/categoryStore";
 
 function slugifyName(name: string): string {
   const base = name
@@ -31,15 +31,14 @@ type AddProductDialogProps = {
   onOpenChange: (open: boolean) => void;
 };
 
-const defaultCategorySlug = categories[0]?.slug ?? "";
-
 export function AddProductDialog({ open, onOpenChange }: AddProductDialogProps) {
   const createProduct = useAdminStore((s) => s.createProduct);
+  const categories = useCategoryStore((s) => s.categories);
 
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
   const [slugManual, setSlugManual] = useState(false);
-  const [categorySlug, setCategorySlug] = useState(defaultCategorySlug);
+  const [categorySlug, setCategorySlug] = useState("");
   const [price, setPrice] = useState("");
   const [oldPrice, setOldPrice] = useState("");
   const [stock, setStock] = useState("0");
@@ -52,10 +51,11 @@ export function AddProductDialog({ open, onOpenChange }: AddProductDialogProps) 
   const [formError, setFormError] = useState<string | null>(null);
 
   const reset = useCallback(() => {
+    const first = categories[0]?.slug ?? "";
     setName("");
     setSlug("");
     setSlugManual(false);
-    setCategorySlug(defaultCategorySlug);
+    setCategorySlug(first);
     setPrice("");
     setOldPrice("");
     setStock("0");
@@ -66,7 +66,7 @@ export function AddProductDialog({ open, onOpenChange }: AddProductDialogProps) 
     setIsActive(true);
     setFormError(null);
     setSubmitting(false);
-  }, []);
+  }, [categories]);
 
   useEffect(() => {
     if (!open) {

@@ -10,6 +10,7 @@ import {
   LogOut,
   ChevronLeft,
 } from "lucide-react";
+import CategorySync from "@/components/CategorySync";
 
 const adminNav = [
   { label: "Dashboard", path: "/admin", icon: LayoutDashboard },
@@ -47,6 +48,7 @@ const AdminLayout = () => {
 
   return (
     <div className="min-h-screen flex bg-muted">
+      <CategorySync />
       {/* Sidebar */}
       <aside className="w-[260px] bg-[hsl(0,0%,18%)] text-white flex flex-col flex-shrink-0">
         <div className="p-5 border-b border-white/10">
