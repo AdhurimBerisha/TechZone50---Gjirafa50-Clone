@@ -1,5 +1,10 @@
 import type { Request, Response } from "express";
-import { OrderStatus, type Prisma } from "../generated/prisma/client";
+import {
+  OrderStatus,
+  PaymentMethod,
+  PaymentStatus,
+  type Prisma,
+} from "../generated/prisma/client";
 import { prisma } from "../lib/prisma";
 import { getClerkUserId } from "../middleware/authMiddleware";
 import Stripe from "stripe";
@@ -10,7 +15,10 @@ const stripe =
     ? new Stripe(stripeSecretKey)
     : null;
 
-async function createOrderFromUserCart(userId: string) {
+async function createOrderFromUserCart(
+  userId: string,
+  paymentMethod: PaymentMethod = PaymentMethod.CASH,
+) {
   const cartItems = await prisma.cartItem.findMany({
     where: { userId },
     include: { product: true },
@@ -40,6 +48,8 @@ async function createOrderFromUserCart(userId: string) {
         userId,
         total,
         status: OrderStatus.PENDING,
+        paymentMethod,
+        paymentStatus: PaymentStatus.PENDING,
       },
     });
 
@@ -260,7 +270,7 @@ const getCurrentUser = async (req: Request, res: Response) => {
 const orderProduct = async (req: Request, res: Response) => {
   try {
     const clerkId = getClerkUserId(req);
-    const { productId, quantity } = req.body;
+    const { productId, quantity, paymentMethod } = req.body;
 
     if (!clerkId || !productId || !quantity || quantity <= 0) {
       return res.status(400).json({ error: "Invalid input" });
@@ -292,6 +302,9 @@ const orderProduct = async (req: Request, res: Response) => {
           userId: user.id,
           total: product.price * quantity,
           status: OrderStatus.PENDING,
+          paymentMethod:
+            paymentMethod === "CARD" ? PaymentMethod.CARD : PaymentMethod.CASH,
+          paymentStatus: PaymentStatus.PENDING,
         },
       });
 
@@ -331,6 +344,8 @@ const orderProduct = async (req: Request, res: Response) => {
 const checkoutCart = async (req: Request, res: Response) => {
   try {
     const clerkId = getClerkUserId(req);
+    const { paymentMethod } = req.body;
+
     if (!clerkId) {
       return res.status(401).json({ error: "Unauthorized" });
     }
@@ -343,7 +358,9 @@ const checkoutCart = async (req: Request, res: Response) => {
       return res.status(404).json({ error: "User not found" });
     }
 
-    const fullOrder = await createOrderFromUserCart(user.id);
+    const pm =
+      paymentMethod === "CARD" ? PaymentMethod.CARD : PaymentMethod.CASH;
+    const fullOrder = await createOrderFromUserCart(user.id, pm);
     return res.status(200).json({ success: true, order: fullOrder });
   } catch (error) {
     if (error instanceof Error && error.message.length > 0) {
@@ -454,14 +471,16 @@ const completeStripeCheckout = async (req: Request, res: Response) => {
       return res.status(404).json({ error: "User not found" });
     }
 
-    const order = await createOrderFromUserCart(user.id);
+    const order = await createOrderFromUserCart(user.id, PaymentMethod.CARD);
     return res.status(200).json({ success: true, order });
   } catch (error) {
     if (error instanceof Error && error.message.length > 0) {
       return res.status(400).json({ error: error.message });
     }
     console.error("Error completing Stripe checkout:", error);
-    return res.status(500).json({ error: "Failed to finalize Stripe checkout" });
+    return res
+      .status(500)
+      .json({ error: "Failed to finalize Stripe checkout" });
   }
 };
 

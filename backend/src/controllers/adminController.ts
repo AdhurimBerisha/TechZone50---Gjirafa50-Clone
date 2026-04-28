@@ -130,6 +130,54 @@ const getAdminOrders = async (req: Request, res: Response) => {
   }
 };
 
+import { OrderStatus, PaymentStatus } from "../generated/prisma/client";
+
+const updateOrderStatus = async (req: Request, res: Response) => {
+  try {
+    const orderId = req.params.id as string;
+    const { status, paymentStatus } = req.body;
+
+    if (!orderId) {
+      return res.status(400).json({ error: "Order ID is required" });
+    }
+
+    const updateData: { status?: OrderStatus; paymentStatus?: PaymentStatus } =
+      {};
+
+    if (status) {
+      if (!Object.values(OrderStatus).includes(status)) {
+        return res.status(400).json({ error: `Invalid status: ${status}` });
+      }
+      updateData.status = status as OrderStatus;
+    }
+
+    if (paymentStatus) {
+      if (!Object.values(PaymentStatus).includes(paymentStatus)) {
+        return res
+          .status(400)
+          .json({ error: `Invalid paymentStatus: ${paymentStatus}` });
+      }
+      updateData.paymentStatus = paymentStatus as PaymentStatus;
+    }
+
+    if (Object.keys(updateData).length === 0) {
+      return res.status(400).json({
+        error: "At least one field (status or paymentStatus) is required",
+      });
+    }
+
+    const order = await prisma.order.update({
+      where: { id: orderId },
+      data: updateData,
+    });
+
+    return res.status(200).json({ success: true, order });
+  } catch (error) {
+    console.error("Error updating order:", error);
+    return res.status(500).json({ error: "Failed to update order" });
+  }
+};
+
 const getAdminSettings = async (req: Request, res: Response) => {};
 
 const createProduct = async (req: Request, res: Response) => {
@@ -569,4 +617,5 @@ export {
   toggleProductAvailability,
   getTopSellingProducts,
   getTotalRevenue,
+  updateOrderStatus,
 };
