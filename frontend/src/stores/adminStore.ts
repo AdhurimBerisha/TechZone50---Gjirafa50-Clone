@@ -45,6 +45,7 @@ interface AdminActions {
   fetchOrders: () => Promise<void>;
   fetchDashboardStats: () => Promise<void>;
   fetchTopSellingProducts: () => Promise<void>;
+  fetchTotalRevenue: () => Promise<void>;
   createProduct: (
     payload: CreateProductPayload,
   ) => Promise<{ ok: true } | { ok: false; error: string }>;
@@ -169,8 +170,7 @@ export const useAdminStore = create<AdminStore>()(
             api.get<{ success: true; users: User[] }>("/api/admin/users"),
           ]);
           const productsOk =
-            "success" in productsRes.data &&
-            productsRes.data.success === true;
+            "success" in productsRes.data && productsRes.data.success === true;
           const usersOk =
             "success" in usersRes.data && usersRes.data.success === true;
           if (!productsOk || !usersOk) {
@@ -224,7 +224,8 @@ export const useAdminStore = create<AdminStore>()(
           const axiosError = error as AxiosError<{ error?: string }>;
           set({
             error:
-              axiosError.response?.data?.error ?? "Failed to fetch top products",
+              axiosError.response?.data?.error ??
+              "Failed to fetch top products",
             isLoading: false,
           });
         }
@@ -297,7 +298,10 @@ export const useAdminStore = create<AdminStore>()(
           const data = res.data;
           if ("success" in data && data.success === true && "orders" in data) {
             const orders = data.orders;
-            const totalRevenue = orders.reduce((sum, order) => sum + order.total, 0);
+            const totalRevenue = orders.reduce(
+              (sum, order) => sum + order.total,
+              0,
+            );
             set({
               recentOrders: orders,
               totalOrders: orders.length,
@@ -312,8 +316,38 @@ export const useAdminStore = create<AdminStore>()(
           console.error("Error fetching orders:", error);
           const axiosError = error as AxiosError<{ error?: string }>;
           set({
+            error: axiosError.response?.data?.error ?? "Failed to fetch orders",
+            isLoading: false,
+          });
+        }
+      },
+
+      fetchTotalRevenue: async () => {
+        try {
+          set({ isLoading: true, error: null });
+          const res = await api.get<
+            { success: true; totalRevenue: number } | { error: string }
+          >("/api/admin/revenue");
+          const data = res.data;
+          if (
+            "success" in data &&
+            data.success === true &&
+            "totalRevenue" in data
+          ) {
+            set({
+              totalRevenue: data.totalRevenue,
+              isLoading: false,
+              error: null,
+            });
+          } else {
+            set({ error: "Failed to fetch revenue", isLoading: false });
+          }
+        } catch (error) {
+          console.error("Error fetching revenue:", error);
+          const axiosError = error as AxiosError<{ error?: string }>;
+          set({
             error:
-              axiosError.response?.data?.error ?? "Failed to fetch orders",
+              axiosError.response?.data?.error ?? "Failed to fetch revenue",
             isLoading: false,
           });
         }
