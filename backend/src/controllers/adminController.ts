@@ -1,4 +1,5 @@
 import type { Request, Response } from "express";
+import { OrderStatus, PaymentStatus } from "../generated/prisma/client";
 import { prisma } from "../lib/prisma";
 
 type MegaLink = { slug?: string };
@@ -129,8 +130,6 @@ const getAdminOrders = async (req: Request, res: Response) => {
     return res.status(500).json({ error: "Failed to fetch orders" });
   }
 };
-
-import { OrderStatus, PaymentStatus } from "../generated/prisma/client";
 
 const updateOrderStatus = async (req: Request, res: Response) => {
   try {
