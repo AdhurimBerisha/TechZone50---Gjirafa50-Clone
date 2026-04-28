@@ -10,6 +10,7 @@ import {
   deleteProduct,
   toggleProductAvailability,
   getTopSellingProducts,
+  getTotalRevenue,
 } from "../controllers/adminController";
 
 const router = Router();
@@ -24,5 +25,6 @@ router.get("/top-products", getTopSellingProducts);
 router.get("/settings", getAdminSettings);
 router.delete("/products/:id", deleteProduct);
 router.put("/products/:id/toggle", toggleProductAvailability);
+router.get("/revenue", getTotalRevenue);
 
 export default router;

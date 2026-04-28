@@ -346,7 +346,8 @@ const updateProduct = async (req: Request, res: Response) => {
           : (existing?.categorySlug ?? "");
       if (!slugForSubs) {
         return res.status(400).json({
-          error: "Cannot set subcategories without a category slug on the product",
+          error:
+            "Cannot set subcategories without a category slug on the product",
         });
       }
       const subCheck = await validateSubcategorySlugsForCategory(
@@ -494,10 +495,13 @@ const getTopSellingProducts = async (req: Request, res: Response) => {
       }),
     ]);
 
-    const productsById = new Map(products.map((product) => [product.id, product]));
+    const productsById = new Map(
+      products.map((product) => [product.id, product]),
+    );
     const revenueByProductId = orderItems.reduce<Record<string, number>>(
       (acc, item) => {
-        acc[item.productId] = (acc[item.productId] ?? 0) + item.quantity * item.price;
+        acc[item.productId] =
+          (acc[item.productId] ?? 0) + item.quantity * item.price;
         return acc;
       },
       {},
@@ -519,12 +523,37 @@ const getTopSellingProducts = async (req: Request, res: Response) => {
           revenue: revenueByProductId[product.id] ?? 0,
         };
       })
-      .filter((product): product is NonNullable<typeof product> => product !== null);
+      .filter(
+        (product): product is NonNullable<typeof product> => product !== null,
+      );
 
     return res.status(200).json({ success: true, topProducts });
   } catch (error) {
     console.error("Error fetching topProducts", error);
     return res.status(500).json({ error: "Failed to fetch top products" });
+  }
+};
+
+const getTotalRevenue = async (req: Request, res: Response) => {
+  try {
+    const result = await prisma.order.aggregate({
+      _sum: {
+        total: true,
+      },
+      where: {
+        status: {
+          notIn: ["CANCELLED", "DELIVERED"],
+        },
+      },
+    });
+
+    return res.status(200).json({
+      success: true,
+      totalRevenue: result._sum.total ?? 0,
+    });
+  } catch (error) {
+    console.error("Error fetching total revenue", error);
+    return res.status(500).json({ error: "Failed to fetch total revenue" });
   }
 };
 
@@ -539,4 +568,5 @@ export {
   deleteProduct,
   toggleProductAvailability,
   getTopSellingProducts,
+  getTotalRevenue,
 };
