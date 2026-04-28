@@ -29,20 +29,30 @@ const statusLabels: Record<string, string> = {
 const AdminDashboard = () => {
   const fetchDashboardStats = useAdminStore((s) => s.fetchDashboardStats);
   const fetchOrders = useAdminStore((s) => s.fetchOrders);
-  const fetchTopSellingProducts = useAdminStore((s) => s.fetchTopSellingProducts);
+  const fetchTopSellingProducts = useAdminStore(
+    (s) => s.fetchTopSellingProducts,
+  );
   const totalProducts = useAdminStore((s) => s.totalProducts);
   const totalUsers = useAdminStore((s) => s.totalUsers);
   const totalOrders = useAdminStore((s) => s.totalOrders);
+  const totalRevenue = useAdminStore((s) => s.totalRevenue);
   const recentOrders = useAdminStore((s) => s.recentOrders);
   const topProducts = useAdminStore((s) => s.topProducts);
   const statsLoading = useAdminStore((s) => s.isLoading);
   const statsError = useAdminStore((s) => s.error);
+  const fetchTotalRevenue = useAdminStore((s) => s.fetchTotalRevenue);
 
   useEffect(() => {
     void fetchDashboardStats();
     void fetchOrders();
     void fetchTopSellingProducts();
-  }, [fetchDashboardStats, fetchOrders, fetchTopSellingProducts]);
+    void fetchTotalRevenue();
+  }, [
+    fetchDashboardStats,
+    fetchOrders,
+    fetchTopSellingProducts,
+    fetchTotalRevenue,
+  ]);
 
   const stats = useMemo(
     () => [
@@ -66,12 +76,12 @@ const AdminDashboard = () => {
       },
       {
         label: "Të ardhurat",
-        value: "45,678€",
+        value: statsLoading ? "…" : formatCount(totalRevenue),
         icon: DollarSign,
         color: "bg-primary",
       },
     ],
-    [statsLoading, totalProducts, totalOrders, totalUsers],
+    [statsLoading, totalProducts, totalOrders, totalUsers, totalRevenue],
   );
 
   return (
@@ -173,7 +183,9 @@ const AdminDashboard = () => {
             {topProducts.map((p) => (
               <div key={p.id} className="flex items-center gap-4">
                 <img
-                  src={p.image || "https://via.placeholder.com/48?text=No+Image"}
+                  src={
+                    p.image || "https://via.placeholder.com/48?text=No+Image"
+                  }
                   alt={p.name}
                   className="w-12 h-12 object-contain rounded"
                 />
