@@ -1,5 +1,5 @@
 import { useAdminStore } from "@/stores/adminStore";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 
 const statusColors: Record<string, string> = {
@@ -17,23 +17,43 @@ const statusLabels: Record<string, string> = {
   SHIPPED: "Dërguar",
   PENDING: "Në pritje",
   CONFIRMED: "Konfirmuar",
-  CANCELED: "Anuluar",
+  CANCELLED: "Anuluar",
 };
+
+const ALL_STATUSES = Object.keys(statusLabels);
 
 const AdminOrders = () => {
   const fetchAllOrders = useAdminStore((s) => s.fetchOrders);
   const isLoading = useAdminStore((s) => s.isLoading);
   const error = useAdminStore((s) => s.error);
   const recentOrders = useAdminStore((s) => s.recentOrders);
+  const updateOrderStatus = useAdminStore((s) => s.updateOrderStatus);
+
+  // Track per-row loading and error state so the whole page doesn't freeze
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [updateError, setUpdateError] = useState<{
+    id: string;
+    msg: string;
+  } | null>(null);
 
   useEffect(() => {
     void fetchAllOrders();
   }, [fetchAllOrders]);
 
-  if (isLoading) {
+  const handleStatusChange = async (orderId: string, newStatus: string) => {
+    setUpdatingId(orderId);
+    setUpdateError(null);
+    const result = await updateOrderStatus(orderId, newStatus);
+    if (!result.ok) {
+      setUpdateError({ id: orderId, msg: result.error });
+    }
+    setUpdatingId(null);
+  };
+
+  if (isLoading && recentOrders.length === 0) {
     return (
-      <div className="flex items-center justify-center">
-        <Loader2 className="h-4 w-4 animate-spin" />
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
       </div>
     );
   }
@@ -85,32 +105,65 @@ const AdminOrders = () => {
               </tr>
             ) : (
               recentOrders.map((order) => (
-                <tr
-                  key={order.id}
-                  className="border-b border-border last:border-b-0 hover:bg-muted/30"
-                >
-                  <td className="px-5 py-3 text-sm font-medium">{order.id}</td>
-                  <td className="px-5 py-3 text-sm">
-                    {order.user?.name || "Pa emër"}
-                  </td>
-                  <td className="px-5 py-3 text-sm text-muted-foreground">
-                    {order.user?.email || "-"}
-                  </td>
-                  <td className="px-5 py-3 text-sm">{order.items?.length ?? 0}</td>
-                  <td className="px-5 py-3 text-sm font-medium">
-                    {order.total.toFixed(2)}€
-                  </td>
-                  <td className="px-5 py-3">
-                    <span
-                      className={`text-xs px-2 py-1 rounded-full font-medium ${statusColors[order.status] || "bg-gray-100 text-gray-700"}`}
-                    >
-                      {statusLabels[order.status] || order.status}
-                    </span>
-                  </td>
-                  <td className="px-5 py-3 text-sm text-muted-foreground">
-                    {new Date(order.createdAt).toLocaleDateString("sq-AL")}
-                  </td>
-                </tr>
+                <>
+                  <tr
+                    key={order.id}
+                    className="border-b border-border last:border-b-0 hover:bg-muted/30"
+                  >
+                    <td className="px-5 py-3 text-sm font-mono font-medium text-muted-foreground">
+                      {order.id.slice(0, 8)}…
+                    </td>
+                    <td className="px-5 py-3 text-sm">
+                      {order.user?.name || "Pa emër"}
+                    </td>
+                    <td className="px-5 py-3 text-sm text-muted-foreground">
+                      {order.user?.email || "-"}
+                    </td>
+                    <td className="px-5 py-3 text-sm">
+                      {order.items?.length ?? 0}
+                    </td>
+                    <td className="px-5 py-3 text-sm font-medium">
+                      {order.total.toFixed(2)}€
+                    </td>
+                    <td className="px-5 py-3">
+                      <div className="flex items-center gap-2">
+                        <select
+                          value={order.status}
+                          disabled={updatingId === order.id}
+                          onChange={(e) =>
+                            void handleStatusChange(order.id, e.target.value)
+                          }
+                          className={`text-xs px-2 py-1 rounded-full font-medium border-0 cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50 disabled:cursor-not-allowed ${
+                            statusColors[order.status] ??
+                            "bg-gray-100 text-gray-700"
+                          }`}
+                        >
+                          {ALL_STATUSES.map((s) => (
+                            <option key={s} value={s}>
+                              {statusLabels[s]}
+                            </option>
+                          ))}
+                        </select>
+                        {updatingId === order.id && (
+                          <Loader2 className="h-3 w-3 animate-spin text-muted-foreground shrink-0" />
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-5 py-3 text-sm text-muted-foreground">
+                      {new Date(order.createdAt).toLocaleDateString("sq-AL")}
+                    </td>
+                  </tr>
+                  {updateError?.id === order.id && (
+                    <tr key={`${order.id}-error`}>
+                      <td
+                        colSpan={7}
+                        className="px-5 pb-2 text-xs text-destructive"
+                      >
+                        {updateError.msg}
+                      </td>
+                    </tr>
+                  )}
+                </>
               ))
             )}
           </tbody>
