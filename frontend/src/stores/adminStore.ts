@@ -46,6 +46,10 @@ interface AdminActions {
   fetchDashboardStats: () => Promise<void>;
   fetchTopSellingProducts: () => Promise<void>;
   fetchTotalRevenue: () => Promise<void>;
+  updateOrderStatus: (
+    id: string,
+    status: string,
+  ) => Promise<{ ok: true } | { ok: false; error: string }>;
   createProduct: (
     payload: CreateProductPayload,
   ) => Promise<{ ok: true } | { ok: false; error: string }>;
@@ -350,6 +354,38 @@ export const useAdminStore = create<AdminStore>()(
               axiosError.response?.data?.error ?? "Failed to fetch revenue",
             isLoading: false,
           });
+        }
+      },
+      updateOrderStatus: async (id: string, status: string) => {
+        try {
+          set({ isLoading: true, error: null });
+          const res = await api.put<
+            { success: true; order: Order } | { error: string }
+          >(`/api/admin/orders/${encodeURIComponent(id)}/status`, { status });
+          const data = res.data;
+          if ("success" in data && data.success === true && "order" in data) {
+            const updated = data.order;
+            set((s) => ({
+              recentOrders: s.recentOrders.map((o) =>
+                o.id === id ? updated : o,
+              ),
+              isLoading: false,
+              error: null,
+            }));
+            return { ok: true as const };
+          }
+          const msg =
+            "error" in res.data && typeof res.data.error === "string"
+              ? res.data.error
+              : "Failed to update order status";
+          return { ok: false as const, error: msg };
+        } catch (error) {
+          console.error("Error updating order status:", error);
+          const axiosError = error as AxiosError<{ error?: string }>;
+          const msg =
+            axiosError.response?.data?.error ?? "Failed to update order status";
+          set({ error: msg, isLoading: false });
+          return { ok: false as const, error: msg };
         }
       },
     }),
