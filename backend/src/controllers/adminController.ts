@@ -604,6 +604,63 @@ const getTotalRevenue = async (req: Request, res: Response) => {
   }
 };
 
+const createGiftCard = async (req: Request, res: Response) => {
+  try {
+    const {
+      initialAmount,
+      expiresAt,
+      recipientEmail,
+      recipientName,
+      recipientPhone,
+      message,
+      currency,
+    } = req.body;
+
+    if (initialAmount === undefined) {
+      return res.status(400).json({ error: "initialAmount is required" });
+    }
+
+    const parsedAmount = Number(initialAmount);
+    if (Number.isNaN(parsedAmount) || parsedAmount <= 0) {
+      return res
+        .status(400)
+        .json({ error: "initialAmount must be a valid positive number" });
+    }
+
+    const randomSegment = () =>
+      Math.random().toString(36).toUpperCase().slice(2, 6).padEnd(4, "0");
+    const displayCode = `GIFT-${randomSegment()}-${randomSegment()}-${randomSegment()}`;
+
+    const giftCard = await prisma.giftCard.create({
+      data: {
+        displayCode,
+        initialAmount: parsedAmount,
+        currentBalance: parsedAmount,
+        currency: currency ?? "EUR",
+        expiresAt: expiresAt ? new Date(expiresAt) : null,
+        recipientEmail: recipientEmail ?? null,
+        recipientName: recipientName ?? null,
+        recipientPhone: recipientPhone ?? null,
+        message: message ?? null,
+        status: "ACTIVE",
+        activatedAt: new Date(),
+      },
+    });
+
+    return res.status(201).json({ success: true, giftCard });
+  } catch (error) {
+    console.error("Error creating gift card", error);
+
+    if ((error as any)?.code === "P2002") {
+      return res
+        .status(409)
+        .json({ error: "A gift card with this code already exists, retry" });
+    }
+
+    return res.status(500).json({ error: "Failed to create gift card" });
+  }
+};
+
 export {
   getAdminDashboard,
   getAllUsers,
@@ -617,4 +674,5 @@ export {
   getTopSellingProducts,
   getTotalRevenue,
   updateOrderStatus,
+  createGiftCard,
 };
