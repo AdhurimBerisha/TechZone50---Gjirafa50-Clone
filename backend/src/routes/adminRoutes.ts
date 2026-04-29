@@ -12,6 +12,7 @@ import {
   getTopSellingProducts,
   getTotalRevenue,
   updateOrderStatus,
+  getAllGiftCards,
   createGiftCard,
 } from "../controllers/adminController";
 
@@ -29,6 +30,7 @@ router.delete("/products/:id", deleteProduct);
 router.put("/products/:id/toggle", toggleProductAvailability);
 router.get("/revenue", getTotalRevenue);
 router.put("/orders/:id/status", updateOrderStatus);
+router.get("/gift-cards", getAllGiftCards);
 router.post("/gift-cards", createGiftCard);
 
 export default router;
