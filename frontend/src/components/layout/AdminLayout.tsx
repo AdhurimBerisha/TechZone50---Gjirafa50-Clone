@@ -9,6 +9,7 @@ import {
   Settings,
   LogOut,
   ChevronLeft,
+  Gift,
 } from "lucide-react";
 import CategorySync from "@/components/CategorySync";
 
@@ -17,6 +18,7 @@ const adminNav = [
   { label: "Produktet", path: "/admin/products", icon: Package },
   { label: "Porositë", path: "/admin/orders", icon: ShoppingCart },
   { label: "Përdoruesit", path: "/admin/users", icon: Users },
+  { label: "Gift Cards", path: "/admin/gift-cards", icon: Gift },
   { label: "Cilësimet", path: "/admin/settings", icon: Settings },
 ];
 

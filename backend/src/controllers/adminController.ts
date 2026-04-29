@@ -604,6 +604,20 @@ const getTotalRevenue = async (req: Request, res: Response) => {
   }
 };
 
+const getAllGiftCards = async (req: Request, res: Response) => {
+  try {
+    const giftCards = await prisma.giftCard.findMany({
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+    return res.status(200).json({ success: true, giftCards });
+  } catch (error) {
+    console.error("Error fetching gift cards:", error);
+    return res.status(500).json({ error: "Failed to fetch gift cards" });
+  }
+};
+
 const createGiftCard = async (req: Request, res: Response) => {
   try {
     const {
@@ -674,5 +688,6 @@ export {
   getTopSellingProducts,
   getTotalRevenue,
   updateOrderStatus,
+  getAllGiftCards,
   createGiftCard,
 };
