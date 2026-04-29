@@ -29,7 +29,6 @@ const AdminOrders = () => {
   const recentOrders = useAdminStore((s) => s.recentOrders);
   const updateOrderStatus = useAdminStore((s) => s.updateOrderStatus);
 
-  // Track per-row loading and error state so the whole page doesn't freeze
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [updateError, setUpdateError] = useState<{
     id: string;
