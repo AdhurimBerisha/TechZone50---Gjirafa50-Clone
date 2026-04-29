@@ -388,6 +388,31 @@ export const useAdminStore = create<AdminStore>()(
           return { ok: false as const, error: msg };
         }
       },
+
+      createGiftCard: async (amount:number) => {
+        try {
+          set({isLoading:true, error:null});
+          const res = await api.post<{success:true, giftCard:{code:string, amount:number}}>(`/api/admin/gift-cards`, {amount});
+          const data = res.data;
+          if("success" in data && data.success === true && "giftCard" in data) {
+            // Gift card created successfully - you can choose to store it in state if needed
+            set({isLoading:false, error:null});
+            return {ok:true as const, code: data.giftCard.code, amount: data.giftCard.amount};
+
+          }
+          const msg = "error" in data && typeof data.error === "string" ? data.error : "Failed to create gift card";
+          set({isLoading:false, error: msg});
+          return {ok:false as const, error: msg};
+        } catch (error) {
+          console.error("Error fetching revenue:", error);
+          const axiosError = error as AxiosError<{ error?: string }>;
+          set({
+            error:
+              axiosError.response?.data?.error ?? "Failed to fetch revenue",
+            isLoading: false,
+          });
+        }
+      }
     }),
     {
       name: "techstore50-admin",
