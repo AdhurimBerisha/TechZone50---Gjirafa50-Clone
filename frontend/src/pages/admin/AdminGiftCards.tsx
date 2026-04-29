@@ -55,7 +55,6 @@ const AdminGiftCards = () => {
   const [creating, setCreating] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
-  // Create form state
   const [formData, setFormData] = useState<CreateGiftCardPayload>({
     initialAmount: 50,
     recipientEmail: "",
