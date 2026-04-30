@@ -3,6 +3,6 @@ import { getAllGiftCards } from "../controllers/giftCardController";
 
 const router = Router();
 
-router.get("/gift-cards", getAllGiftCards);
+router.get("/", getAllGiftCards);
 
 export default router;
