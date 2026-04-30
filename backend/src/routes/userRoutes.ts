@@ -19,6 +19,7 @@ import {
   updateCartItem,
   removeFromCart,
   clearCart,
+  orderGiftCard,
 } from "../controllers/userController";
 import { requireClerkAuth } from "../middleware/authMiddleware";
 
@@ -38,11 +39,7 @@ router.post(
   requireClerkAuth,
   createStripeCheckoutSession,
 );
-router.post(
-  "/order/stripe/complete",
-  requireClerkAuth,
-  completeStripeCheckout,
-);
+router.post("/order/stripe/complete", requireClerkAuth, completeStripeCheckout);
 router.get("/cart", requireClerkAuth, fetchCart);
 router.post("/cart", requireClerkAuth, addToCart);
 router.patch("/cart", requireClerkAuth, updateCartItem);
@@ -51,5 +48,6 @@ router.put("/me", requireClerkAuth, updateUser);
 router.delete("/me", requireClerkAuth, deleteUser);
 router.delete("/cart/clear", requireClerkAuth, clearCart);
 router.get("/:id", getUserById);
+router.post("/gift-card/order", requireClerkAuth, orderGiftCard);
 
 export default router;
