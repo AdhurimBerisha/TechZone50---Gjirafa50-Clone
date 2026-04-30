@@ -50,6 +50,11 @@ interface OrderState {
     sessionId: string,
   ) => Promise<PlacedOrder>;
   fetchOrders: (token: string) => Promise<void>;
+  orderGiftCard: (
+    token: string,
+    giftCardId: string,
+    paymentMethod?: string,
+  ) => Promise<PlacedOrder>;
 }
 
 function getErrorMessage(e: unknown): string {
@@ -118,10 +123,7 @@ export const useOrderStore = create<OrderState>()((set) => ({
         set((state) => ({
           lastOrder: placed,
           isOrdering: false,
-          orders: [
-            placed,
-            ...state.orders.filter((o) => o.id !== placed.id),
-          ],
+          orders: [placed, ...state.orders.filter((o) => o.id !== placed.id)],
         }));
         return placed;
       }
@@ -151,10 +153,7 @@ export const useOrderStore = create<OrderState>()((set) => ({
         set((state) => ({
           lastOrder: placed,
           isOrdering: false,
-          orders: [
-            placed,
-            ...state.orders.filter((o) => o.id !== placed.id),
-          ],
+          orders: [placed, ...state.orders.filter((o) => o.id !== placed.id)],
         }));
         return placed;
       }
@@ -219,10 +218,41 @@ export const useOrderStore = create<OrderState>()((set) => ({
         set((state) => ({
           lastOrder: placed,
           isOrdering: false,
-          orders: [
-            placed,
-            ...state.orders.filter((o) => o.id !== placed.id),
-          ],
+          orders: [placed, ...state.orders.filter((o) => o.id !== placed.id)],
+        }));
+        return placed;
+      }
+      const msg =
+        "error" in res.data && res.data.error
+          ? res.data.error
+          : "Porosia dështoi";
+      set({ isOrdering: false, orderError: msg });
+      throw new Error(msg);
+    } catch (e) {
+      const msg = getErrorMessage(e);
+      set({ isOrdering: false, orderError: msg });
+      throw new Error(msg);
+    }
+  },
+
+  orderGiftCard: async (
+    token: string,
+    giftCardId: string,
+    paymentMethod?: string,
+  ): Promise<PlacedOrder> => {
+    set({ isOrdering: true, orderError: null });
+    try {
+      const res = await api.post<OrderResponse>(
+        "/api/users/gift-card/order",
+        { giftCardId, paymentMethod },
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+      if ("success" in res.data && res.data.success === true) {
+        const placed = res.data.order;
+        set((state) => ({
+          lastOrder: placed,
+          isOrdering: false,
+          orders: [placed, ...state.orders.filter((o) => o.id !== placed.id)],
         }));
         return placed;
       }
