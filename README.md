@@ -23,7 +23,7 @@ Built with a scalable architecture, this project demonstrates real-world e-comme
 
 **Frontend:**
 - React  
-- Redux Toolkit for state management  
+- Zustand for state management  
 - Tailwind CSS for UI styling  
 - Axios for API communication  
 - Stripe for payment integration  
