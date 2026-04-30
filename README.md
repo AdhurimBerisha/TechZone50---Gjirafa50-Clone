@@ -22,7 +22,7 @@ Built with a scalable architecture, this project demonstrates real-world e-comme
 ## Tech Stack
 
 **Frontend:**
-- React  
+- Vite(React+Typescript)  
 - Zustand for state management  
 - Tailwind CSS for UI styling  
 - Axios for API communication  
