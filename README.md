@@ -32,8 +32,6 @@ Built with a scalable architecture, this project demonstrates real-world e-comme
 - Node.js with Express.js  
 - PostgreSQL (via Prisma ORM)  
 - Clerk for authentication  
-- Cloudinary for image storage  
-- JWT for secure API communication  
 
 ## Installation
 
