@@ -8,6 +8,7 @@ import userRoutes from "./routes/userRoutes";
 import adminRoutes from "./routes/adminRoutes";
 import productRoutes from "./routes/productRoutes";
 import categoryRoutes from "./routes/categoryRoutes";
+import giftCardRoutes from "./routes/giftCardRoutes";
 
 async function verifyDatabase(): Promise<void> {
   const databaseUrl = process.env.DATABASE_URL;
@@ -50,6 +51,7 @@ async function start(): Promise<void> {
   app.use("/api/admin", adminRoutes);
   app.use("/api/products", productRoutes);
   app.use("/api/categories", categoryRoutes);
+  app.use("/api/gift-cards", giftCardRoutes);
 
   const PORT = process.env.PORT || 5000;
 
