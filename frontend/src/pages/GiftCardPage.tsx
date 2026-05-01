@@ -95,8 +95,6 @@ const GiftCardPage = () => {
     (card) => card.purchaserId === currentUser?.id,
   );
 
-  // Group available gift cards by denomination (initialAmount)
-  // This treats them as infinite stock - same denomination available multiple times
   const availableDenominations = Array.from(
     new Map(
       giftCards
