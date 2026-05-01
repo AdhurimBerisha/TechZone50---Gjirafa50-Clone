@@ -7,7 +7,8 @@ Built with a scalable architecture, this project demonstrates real-world e-comme
 ## Features
 
 - Browse and search products with filters and categories  
-- View detailed product pages with images and descriptions  
+- View detailed product pages with images and descriptions
+- Purchase various amounts of gift cards
 - Add products to cart and manage quantities  
 - Secure checkout and payment integration  
 - User authentication and profile management  
