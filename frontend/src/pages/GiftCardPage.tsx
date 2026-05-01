@@ -95,8 +95,14 @@ const GiftCardPage = () => {
     (card) => card.purchaserId === currentUser?.id,
   );
 
-  const availableGiftCards = giftCards.filter(
-    (card) => !card.purchaserId && card.status === "ACTIVE",
+  // Group available gift cards by denomination (initialAmount)
+  // This treats them as infinite stock - same denomination available multiple times
+  const availableDenominations = Array.from(
+    new Map(
+      giftCards
+        .filter((card) => !card.purchaserId && card.status === "ACTIVE")
+        .map((card) => [card.initialAmount, card]),
+    ).values(),
   );
 
   const isAdmin = currentUser?.role === "ADMIN";
@@ -195,75 +201,81 @@ const GiftCardPage = () => {
         </div>
       )}
 
-      {!isAdmin && !isLoading && !error && availableGiftCards.length > 0 && (
-        <div className="mb-12">
-          <h2 className="text-xl font-semibold mb-4 text-center">
-            Gift Cards të Gatshme për Bli
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {availableGiftCards.map((card) => (
-              <div
-                key={card.id}
-                className="bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl p-6 text-white"
-              >
-                <div className="flex items-center justify-between mb-4">
-                  <span className="text-sm font-medium opacity-80">
-                    TechStore50
-                  </span>
-                  <Gift className="h-5 w-5 opacity-60" />
-                </div>
-                <p className="text-3xl font-bold">{card.initialAmount}€</p>
-                <button
-                  type="button"
-                  onClick={() => void handlePurchase(card.id)}
-                  disabled={isPurchasing}
-                  className="w-full mt-4 bg-white text-purple-600 py-2 rounded-lg text-sm font-medium hover:bg-white/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isPurchasing ? (
-                    <span className="inline-flex items-center justify-center gap-2">
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Duke blerë...
-                    </span>
-                  ) : (
-                    "Blej Tani"
-                  )}
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {!isAdmin && !isLoading && !error && availableGiftCards.length === 0 && (
-        <div>
-          <h2 className="text-xl font-semibold mb-4 text-center">
-            Bli një Gift Card
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-4xl mx-auto">
-            {purchaseOptions.map((card) => (
-              <div key={card.value} className="group cursor-pointer">
+      {!isAdmin &&
+        !isLoading &&
+        !error &&
+        availableDenominations.length > 0 && (
+          <div className="mb-12">
+            <h2 className="text-xl font-semibold mb-4 text-center">
+              Gift Cards të Gatshme për Bli
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {availableDenominations.map((card) => (
                 <div
-                  className={`bg-gradient-to-br ${card.color} rounded-xl p-6 text-white aspect-[4/3] flex flex-col justify-between group-hover:scale-105 transition-transform`}
+                  key={card.id}
+                  className="bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl p-6 text-white"
                 >
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between mb-4">
                     <span className="text-sm font-medium opacity-80">
                       TechStore50
                     </span>
                     <Gift className="h-5 w-5 opacity-60" />
                   </div>
-                  <div>
-                    <p className="text-4xl font-bold">{card.value}€</p>
-                    <p className="text-sm opacity-80 mt-1">Gift Card</p>
-                  </div>
+                  <p className="text-3xl font-bold">{card.initialAmount}€</p>
+                  <button
+                    type="button"
+                    onClick={() => void handlePurchase(card.id)}
+                    disabled={isPurchasing}
+                    className="w-full mt-4 bg-white text-purple-600 py-2 rounded-lg text-sm font-medium hover:bg-white/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isPurchasing ? (
+                      <span className="inline-flex items-center justify-center gap-2">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Duke blerë...
+                      </span>
+                    ) : (
+                      "Blej Tani"
+                    )}
+                  </button>
                 </div>
-                <button className="w-full mt-3 bg-primary text-primary-foreground py-2.5 rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors">
-                  Blej {card.value}€ Gift Card
-                </button>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
-      )}
+        )}
+
+      {!isAdmin &&
+        !isLoading &&
+        !error &&
+        availableDenominations.length === 0 && (
+          <div>
+            <h2 className="text-xl font-semibold mb-4 text-center">
+              Bli një Gift Card
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-4xl mx-auto">
+              {purchaseOptions.map((card) => (
+                <div key={card.value} className="group cursor-pointer">
+                  <div
+                    className={`bg-gradient-to-br ${card.color} rounded-xl p-6 text-white aspect-[4/3] flex flex-col justify-between group-hover:scale-105 transition-transform`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium opacity-80">
+                        TechStore50
+                      </span>
+                      <Gift className="h-5 w-5 opacity-60" />
+                    </div>
+                    <div>
+                      <p className="text-4xl font-bold">{card.value}€</p>
+                      <p className="text-sm opacity-80 mt-1">Gift Card</p>
+                    </div>
+                  </div>
+                  <button className="w-full mt-3 bg-primary text-primary-foreground py-2.5 rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors">
+                    Blej {card.value}€ Gift Card
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
       <Dialog open={giftModalOpen} onOpenChange={setGiftModalOpen}>
         <DialogContent>
