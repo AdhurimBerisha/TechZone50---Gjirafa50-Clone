@@ -622,6 +622,7 @@ const createGiftCard = async (req: Request, res: Response) => {
   try {
     const {
       initialAmount,
+      quantity = 1,
       expiresAt,
       recipientEmail,
       recipientName,
@@ -641,13 +642,18 @@ const createGiftCard = async (req: Request, res: Response) => {
         .json({ error: "initialAmount must be a valid positive number" });
     }
 
+    const parsedQuantity = Math.max(1, Math.min(1000, Number(quantity) || 1));
+
     const randomSegment = () =>
       Math.random().toString(36).toUpperCase().slice(2, 6).padEnd(4, "0");
-    const displayCode = `GIFT-${randomSegment()}-${randomSegment()}-${randomSegment()}`;
+    const generateDisplayCode = () =>
+      `GIFT-${randomSegment()}-${randomSegment()}-${randomSegment()}`;
 
-    const giftCard = await prisma.giftCard.create({
-      data: {
-        displayCode,
+    // Create multiple gift cards with the same denomination (infinite stock)
+    const giftCards = await prisma.giftCard.createMany({
+      data: Array.from({ length: parsedQuantity }, () => ({
+        displayCode: generateDisplayCode(),
+        code: generateDisplayCode(),
         initialAmount: parsedAmount,
         currentBalance: parsedAmount,
         currency: currency ?? "EUR",
@@ -656,12 +662,16 @@ const createGiftCard = async (req: Request, res: Response) => {
         recipientName: recipientName ?? null,
         recipientPhone: recipientPhone ?? null,
         message: message ?? null,
-        status: "ACTIVE",
+        status: "ACTIVE" as const,
         activatedAt: new Date(),
-      },
+      })),
     });
 
-    return res.status(201).json({ success: true, giftCard });
+    return res.status(201).json({
+      success: true,
+      message: `Created ${giftCards.count} gift cards`,
+      count: giftCards.count,
+    });
   } catch (error) {
     console.error("Error creating gift card", error);
 
