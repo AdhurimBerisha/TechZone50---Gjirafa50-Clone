@@ -10,6 +10,8 @@ import {
   checkoutCart,
   createStripeCheckoutSession,
   completeStripeCheckout,
+  createGiftCardStripeCheckoutSession,
+  completeGiftCardStripeCheckout,
   addToWishList,
   removeFromWishList,
   fetchWishlist,
@@ -48,6 +50,16 @@ router.put("/me", requireClerkAuth, updateUser);
 router.delete("/me", requireClerkAuth, deleteUser);
 router.delete("/cart/clear", requireClerkAuth, clearCart);
 router.get("/:id", getUserById);
+router.post(
+  "/gift-card/stripe/create-session",
+  requireClerkAuth,
+  createGiftCardStripeCheckoutSession,
+);
+router.post(
+  "/gift-card/stripe/complete",
+  requireClerkAuth,
+  completeGiftCardStripeCheckout,
+);
 router.post("/gift-card/order", requireClerkAuth, orderGiftCard);
 
 export default router;

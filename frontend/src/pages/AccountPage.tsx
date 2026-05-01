@@ -1,11 +1,20 @@
 import { useEffect, useState } from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router";
 import { useAuth, useUser } from "@clerk/react";
-import { User, Package, Heart, LogOut, Save, Loader2 } from "lucide-react";
+import {
+  User,
+  Package,
+  Heart,
+  LogOut,
+  Save,
+  Loader2,
+  Gift,
+} from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
 import { useWishlistStore } from "@/stores/wishlistStore";
 import { useCartStore } from "@/stores/cartStore";
 import { ProfileOrders } from "@/components/account/ProfileOrders";
+import { ProfileGiftCards } from "@/components/account/ProfileGiftCards";
 
 const navLinkClass = ({ isActive }: { isActive: boolean }) =>
   [
@@ -19,6 +28,7 @@ const AccountPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const isOrdersSection = location.pathname === "/account/orders";
+  const isGiftCardsSection = location.pathname === "/account/gift-cards";
   const { isSignedIn, signOut, getToken } = useAuth();
   const { user } = useUser();
   const { currentUser, updateUser, error } = useAuthStore();
@@ -107,6 +117,9 @@ const AccountPage = () => {
             <NavLink to="/account/orders" className={navLinkClass}>
               <Package className="h-4 w-4" /> Porositë
             </NavLink>
+            <NavLink to="/account/gift-cards" className={navLinkClass}>
+              <Gift className="h-4 w-4" /> Gift Cards
+            </NavLink>
             <Link
               to="/wishlist"
               className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-muted text-sm text-muted-foreground"
@@ -124,7 +137,9 @@ const AccountPage = () => {
 
         {/* Content */}
         <div className="lg:col-span-3 space-y-6">
-          {isOrdersSection ? (
+          {isGiftCardsSection ? (
+            <ProfileGiftCards />
+          ) : isOrdersSection ? (
             <ProfileOrders />
           ) : (
             <div className="bg-white rounded-lg border border-border p-6">
@@ -180,7 +195,9 @@ const AccountPage = () => {
                 </div>
               </div>
 
-              {error && <p className="mt-3 text-sm text-destructive">{error}</p>}
+              {error && (
+                <p className="mt-3 text-sm text-destructive">{error}</p>
+              )}
               {successMsg && (
                 <p className="mt-3 text-sm text-green-600">{successMsg}</p>
               )}
