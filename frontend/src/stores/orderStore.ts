@@ -21,7 +21,21 @@ export type PlacedOrder = {
 };
 
 type OrderResponse =
-  | { success: true; order: PlacedOrder }
+  | {
+      success: true;
+      order: PlacedOrder;
+      giftCard?: {
+        id: string;
+        displayCode: string;
+        code: string;
+        initialAmount: number;
+        currentBalance: number;
+        currency: string;
+        status: string;
+        createdAt: string;
+        updatedAt: string;
+      };
+    }
   | { success?: false; error?: string };
 
 type FetchOrdersResponse =
@@ -49,12 +63,46 @@ interface OrderState {
     token: string,
     sessionId: string,
   ) => Promise<PlacedOrder>;
+  createGiftCardStripeSession: (
+    token: string,
+    giftCardId: string,
+  ) => Promise<{ sessionId: string; checkoutUrl: string }>;
+  completeGiftCardStripeCheckout: (
+    token: string,
+    sessionId: string,
+  ) => Promise<{
+    order: PlacedOrder;
+    giftCard?: {
+      id: string;
+      displayCode: string;
+      code: string;
+      initialAmount: number;
+      currentBalance: number;
+      currency: string;
+      status: string;
+      createdAt: string;
+      updatedAt: string;
+    };
+  }>;
   fetchOrders: (token: string) => Promise<void>;
   orderGiftCard: (
     token: string,
     giftCardId: string,
     paymentMethod?: string,
-  ) => Promise<PlacedOrder>;
+  ) => Promise<{
+    order: PlacedOrder;
+    giftCard?: {
+      id: string;
+      displayCode: string;
+      code: string;
+      initialAmount: number;
+      currentBalance: number;
+      currency: string;
+      status: string;
+      createdAt: string;
+      updatedAt: string;
+    };
+  }>;
 }
 
 function getErrorMessage(e: unknown): string {
@@ -235,11 +283,89 @@ export const useOrderStore = create<OrderState>()((set) => ({
     }
   },
 
+  createGiftCardStripeSession: async (token, giftCardId) => {
+    set({ isOrdering: true, orderError: null });
+    try {
+      const res = await api.post<
+        | {
+            success: true;
+            sessionId: string;
+            checkoutUrl: string;
+          }
+        | { success?: false; error?: string }
+      >(
+        "/api/users/gift-card/stripe/create-session",
+        { giftCardId },
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+      if ("success" in res.data && res.data.success === true) {
+        set({ isOrdering: false });
+        return {
+          sessionId: res.data.sessionId,
+          checkoutUrl: res.data.checkoutUrl,
+        };
+      }
+      const msg =
+        "error" in res.data && res.data.error
+          ? res.data.error
+          : "Dështoi nisja e pagesës online";
+      set({ isOrdering: false, orderError: msg });
+      throw new Error(msg);
+    } catch (e) {
+      const msg = getErrorMessage(e);
+      set({ isOrdering: false, orderError: msg });
+      throw new Error(msg);
+    }
+  },
+
+  completeGiftCardStripeCheckout: async (token, sessionId) => {
+    set({ isOrdering: true, orderError: null });
+    try {
+      const res = await api.post<OrderResponse>(
+        "/api/users/gift-card/stripe/complete",
+        { sessionId },
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+      if ("success" in res.data && res.data.success === true) {
+        const placed = res.data.order;
+        set((state) => ({
+          lastOrder: placed,
+          isOrdering: false,
+          orders: [placed, ...state.orders.filter((o) => o.id !== placed.id)],
+        }));
+        return { order: placed, giftCard: res.data.giftCard };
+      }
+      const msg =
+        "error" in res.data && res.data.error
+          ? res.data.error
+          : "Porosia dështoi";
+      set({ isOrdering: false, orderError: msg });
+      throw new Error(msg);
+    } catch (e) {
+      const msg = getErrorMessage(e);
+      set({ isOrdering: false, orderError: msg });
+      throw new Error(msg);
+    }
+  },
+
   orderGiftCard: async (
     token: string,
     giftCardId: string,
     paymentMethod?: string,
-  ): Promise<PlacedOrder> => {
+  ): Promise<{
+    order: PlacedOrder;
+    giftCard?: {
+      id: string;
+      displayCode: string;
+      code: string;
+      initialAmount: number;
+      currentBalance: number;
+      currency: string;
+      status: string;
+      createdAt: string;
+      updatedAt: string;
+    };
+  }> => {
     set({ isOrdering: true, orderError: null });
     try {
       const res = await api.post<OrderResponse>(
@@ -254,7 +380,7 @@ export const useOrderStore = create<OrderState>()((set) => ({
           isOrdering: false,
           orders: [placed, ...state.orders.filter((o) => o.id !== placed.id)],
         }));
-        return placed;
+        return { order: placed, giftCard: res.data.giftCard };
       }
       const msg =
         "error" in res.data && res.data.error

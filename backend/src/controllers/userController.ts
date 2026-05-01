@@ -3,6 +3,7 @@ import {
   OrderStatus,
   PaymentMethod,
   PaymentStatus,
+  TransactionType,
   type Prisma,
 } from "../generated/prisma/client";
 import { prisma } from "../lib/prisma";
@@ -84,6 +85,70 @@ async function createOrderFromUserCart(
     where: { id: order.id },
     include: { items: true },
   });
+}
+
+async function createGiftCardOrder(
+  user: { id: string; email: string | null; name: string | null },
+  giftCardId: string,
+  paymentMethod: PaymentMethod,
+  paymentStatus: PaymentStatus,
+) {
+  const giftCard = await prisma.giftCard.findUnique({
+    where: { id: giftCardId },
+  });
+
+  if (!giftCard) {
+    throw new Error("Gift card not found");
+  }
+  if (giftCard.purchaserId) {
+    throw new Error("Gift card already purchased");
+  }
+  if (giftCard.status !== "ACTIVE") {
+    throw new Error("Gift card is not available");
+  }
+
+  const result = await prisma.$transaction(async (tx) => {
+    const newOrder = await tx.order.create({
+      data: {
+        userId: user.id,
+        total: giftCard.initialAmount,
+        status:
+          paymentMethod === PaymentMethod.CASH
+            ? OrderStatus.PENDING
+            : OrderStatus.CONFIRMED,
+        paymentStatus,
+        paymentMethod,
+      },
+    });
+
+    const updatedGiftCard = await tx.giftCard.update({
+      where: { id: giftCardId },
+      data: {
+        purchaserId: user.id,
+        purchaserEmail: user.email,
+        purchaserName: user.name,
+        orderId: newOrder.id,
+        activatedAt: new Date(),
+        currentBalance: giftCard.initialAmount,
+      },
+    });
+
+    await tx.giftCardTransaction.create({
+      data: {
+        giftCardId: giftCard.id,
+        type: TransactionType.PURCHASE,
+        amount: giftCard.initialAmount,
+        balanceBefore: giftCard.currentBalance ?? 0,
+        balanceAfter: giftCard.initialAmount,
+        orderId: newOrder.id,
+        description: "Gift card purchase",
+      },
+    });
+
+    return { order: newOrder, giftCard: updatedGiftCard };
+  });
+
+  return result;
 }
 
 const syncUser = async (req: Request, res: Response) => {
@@ -879,7 +944,6 @@ const orderGiftCard = async (req: Request, res: Response) => {
       return res.status(400).json({ error: "giftCardId is required" });
     }
 
-    // Find user by clerkId
     const user = await prisma.user.findFirst({
       where: { clerkId },
     });
@@ -888,7 +952,52 @@ const orderGiftCard = async (req: Request, res: Response) => {
       return res.status(404).json({ error: "User not found" });
     }
 
-    // Find the gift card
+    const paymentMethodValue =
+      paymentMethod === "CARD" ? PaymentMethod.CARD : PaymentMethod.CASH;
+    const paymentStatusValue =
+      paymentMethodValue === PaymentMethod.CARD
+        ? PaymentStatus.PENDING
+        : PaymentStatus.PENDING;
+
+    const result = await createGiftCardOrder(
+      { id: user.id, email: user.email, name: user.name },
+      giftCardId,
+      paymentMethodValue,
+      paymentStatusValue,
+    );
+
+    return res.status(201).json({ success: true, ...result });
+  } catch (error) {
+    console.error("Error ordering gift card", error);
+    return res.status(500).json({ error: "Failed to purchase gift card" });
+  }
+};
+
+const createGiftCardStripeCheckoutSession = async (
+  req: Request,
+  res: Response,
+) => {
+  try {
+    if (!stripe) {
+      return res.status(500).json({ error: "Stripe is not configured" });
+    }
+
+    const clerkId = getClerkUserId(req);
+    const { giftCardId } = req.body;
+
+    if (!clerkId || !giftCardId) {
+      return res.status(400).json({ error: "giftCardId is required" });
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { clerkId },
+      select: { id: true, email: true },
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
     const giftCard = await prisma.giftCard.findUnique({
       where: { id: giftCardId },
     });
@@ -905,38 +1014,101 @@ const orderGiftCard = async (req: Request, res: Response) => {
       return res.status(400).json({ error: "Gift card is not available" });
     }
 
-    // Create order and update gift card in a transaction
-    const order = await prisma.$transaction(async (tx) => {
-      // Create order
-      const newOrder = await tx.order.create({
-        data: {
-          userId: user.id,
-          total: giftCard.initialAmount,
-          status: OrderStatus.PENDING,
-          paymentStatus: PaymentStatus.PENDING,
-          paymentMethod: (paymentMethod as PaymentMethod) || PaymentMethod.CASH,
-        },
-      });
+    const frontendUrl =
+      process.env.FRONTEND_URL?.trim() || "http://localhost:5173";
 
-      // Update gift card with purchaser info
-      await tx.giftCard.update({
-        where: { id: giftCardId },
-        data: {
-          purchaserId: user.id,
-          purchaserEmail: user.email,
-          purchaserName: user.name,
-          orderId: newOrder.id,
-          activatedAt: new Date(),
+    const session = await stripe.checkout.sessions.create({
+      mode: "payment",
+      payment_method_types: ["card"],
+      line_items: [
+        {
+          quantity: 1,
+          price_data: {
+            currency: giftCard.currency?.toLowerCase() ?? "eur",
+            unit_amount: Math.round(giftCard.initialAmount * 100),
+            product_data: {
+              name: `Gift Card ${giftCard.displayCode}`,
+              description: `Gift card with value ${giftCard.initialAmount} ${giftCard.currency}`,
+            },
+          },
         },
-      });
-
-      return newOrder;
+      ],
+      customer_email: user.email ?? undefined,
+      success_url: `${frontendUrl}/gift-card?stripe=success&session_id={CHECKOUT_SESSION_ID}&giftCardId=${giftCardId}`,
+      cancel_url: `${frontendUrl}/gift-card?stripe=cancel`,
+      metadata: {
+        clerkId,
+        giftCardId,
+      },
     });
 
-    return res.status(201).json(order);
+    return res.status(200).json({
+      success: true,
+      sessionId: session.id,
+      checkoutUrl: session.url,
+    });
   } catch (error) {
-    console.error("Error ordering gift card", error);
-    return res.status(500).json({ error: "Failed to purchase gift card" });
+    console.error("Error creating Stripe gift card checkout session:", error);
+    return res.status(500).json({ error: "Failed to create Stripe session" });
+  }
+};
+
+const completeGiftCardStripeCheckout = async (req: Request, res: Response) => {
+  try {
+    if (!stripe) {
+      return res.status(500).json({ error: "Stripe is not configured" });
+    }
+
+    const clerkId = getClerkUserId(req);
+    const { sessionId } = req.body as { sessionId?: string };
+
+    if (!clerkId) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+    if (!sessionId) {
+      return res.status(400).json({ error: "sessionId is required" });
+    }
+
+    const session = await stripe.checkout.sessions.retrieve(sessionId);
+    if (session.payment_status !== "paid") {
+      return res.status(400).json({ error: "Payment is not completed" });
+    }
+
+    const sessionClerkId = session.metadata?.clerkId;
+    const giftCardId = session.metadata?.giftCardId;
+    if (!sessionClerkId || sessionClerkId !== clerkId) {
+      return res.status(403).json({ error: "Session does not belong to user" });
+    }
+    if (!giftCardId) {
+      return res
+        .status(400)
+        .json({ error: "Missing giftCardId in Stripe session" });
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { clerkId },
+      select: { id: true, email: true, name: true },
+    });
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const result = await createGiftCardOrder(
+      { id: user.id, email: user.email, name: user.name },
+      giftCardId,
+      PaymentMethod.CARD,
+      PaymentStatus.COMPLETED,
+    );
+
+    return res.status(200).json({ success: true, ...result });
+  } catch (error) {
+    if (error instanceof Error && error.message.length > 0) {
+      return res.status(400).json({ error: error.message });
+    }
+    console.error("Error completing Stripe gift card checkout:", error);
+    return res
+      .status(500)
+      .json({ error: "Failed to finalize Stripe gift card purchase" });
   }
 };
 
@@ -951,6 +1123,8 @@ export {
   checkoutCart,
   createStripeCheckoutSession,
   completeStripeCheckout,
+  createGiftCardStripeCheckoutSession,
+  completeGiftCardStripeCheckout,
   addToWishList,
   removeFromWishList,
   fetchWishlist,
