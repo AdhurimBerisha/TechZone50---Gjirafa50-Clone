@@ -4,7 +4,15 @@ import { prisma } from "../lib/prisma";
 
 const getProducts = async (req: Request, res: Response) => {
   try {
-    const products = await prisma.product.findMany();
+    const outletQuery = String(req.query.outlet || "").toLowerCase();
+    const outletOnly = outletQuery === "true" || outletQuery === "1";
+    const where: Prisma.ProductWhereInput = {};
+
+    if (outletOnly) {
+      where.isOutlet = true;
+    }
+
+    const products = await prisma.product.findMany({ where });
     return res.status(200).json({ success: true, products });
   } catch (error) {
     console.error("Error fetching products:", error);

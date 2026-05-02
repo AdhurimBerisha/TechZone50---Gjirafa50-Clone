@@ -203,6 +203,7 @@ const ProductPage = () => {
 
           {/* Badges */}
           <div className="flex items-center gap-2 mt-2">
+            {product.isOutlet && <Badge variant="destructive">Outlet</Badge>}
             {product.badges.includes("new") && (
               <Badge variant="secondary" className="bg-blue-100 text-blue-800">
                 Risi

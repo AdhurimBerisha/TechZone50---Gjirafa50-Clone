@@ -29,6 +29,12 @@ const ProductCard = ({ product }: { product: Product }) => {
     <div className="bg-white rounded-lg border border-border overflow-hidden group hover:shadow-lg transition-shadow relative">
       {/* Badges */}
       <div className="absolute top-2 left-2 z-10 flex flex-col gap-1">
+        {product.isOutlet && (
+          <span className="bg-red-600 text-white text-xs px-2 py-0.5 rounded font-medium">
+            Outlet
+            {product.outletDiscount ? ` - ${product.outletDiscount}%` : ""}
+          </span>
+        )}
         {product.badges.includes("24h") && (
           <span className="flex items-center gap-1 bg-muted text-xs px-2 py-0.5 rounded font-medium">
             <Truck className="h-3 w-3" /> 24h
