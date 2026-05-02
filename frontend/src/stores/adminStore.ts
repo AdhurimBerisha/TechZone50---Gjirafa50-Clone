@@ -240,7 +240,9 @@ export const useAdminStore = create<AdminStore>()(
           const res = await api.post<
             { success: true; product: BackendProduct } | { error: string }
           >("/api/admin/products", payload, {
-            headers: isFormData ? { "Content-Type": "multipart/form-data" } : undefined,
+            headers: isFormData
+              ? { "Content-Type": "multipart/form-data" }
+              : undefined,
           });
           const data = res.data;
           if ("success" in data && data.success === true && "product" in data) {

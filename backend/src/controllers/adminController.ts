@@ -213,7 +213,7 @@ const createProduct = async (req: Request, res: Response) => {
           (error, result) => {
             if (error) reject(error);
             else resolve(result);
-          }
+          },
         );
         stream.end(req.file!.buffer);
       });

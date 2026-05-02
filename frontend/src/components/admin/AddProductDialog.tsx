@@ -33,7 +33,10 @@ type AddProductDialogProps = {
   onOpenChange: (open: boolean) => void;
 };
 
-export function AddProductDialog({ open, onOpenChange }: AddProductDialogProps) {
+export function AddProductDialog({
+  open,
+  onOpenChange,
+}: AddProductDialogProps) {
   const createProduct = useAdminStore((s) => s.createProduct);
   const categories = useCategoryStore((s) => s.categories);
 
@@ -133,7 +136,9 @@ export function AddProductDialog({ open, onOpenChange }: AddProductDialogProps) 
     const parsedStock = stock.trim() === "" ? 0 : Number(stock);
     if (
       stock.trim() !== "" &&
-      (Number.isNaN(parsedStock) || !Number.isInteger(parsedStock) || parsedStock < 0)
+      (Number.isNaN(parsedStock) ||
+        !Number.isInteger(parsedStock) ||
+        parsedStock < 0)
     ) {
       setFormError("Stoku duhet të jetë numër i plotë jo negativ.");
       return;
@@ -303,7 +308,9 @@ export function AddProductDialog({ open, onOpenChange }: AddProductDialogProps) 
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="admin-product-old">Çmimi i vjetër (opsional)</Label>
+                <Label htmlFor="admin-product-old">
+                  Çmimi i vjetër (opsional)
+                </Label>
                 <Input
                   id="admin-product-old"
                   type="number"
