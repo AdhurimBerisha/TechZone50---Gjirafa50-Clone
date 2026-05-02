@@ -19,6 +19,10 @@ export type BackendProduct = {
   stock: number;
   isFeatured: boolean;
   isActive: boolean;
+  isOutlet: boolean;
+  outletDiscount?: number | null;
+  outletStock?: number | null;
+  condition: "NEW" | "OPEN_BOX" | "REFURBISHED";
   createdAt: string;
   updatedAt: string;
 };
@@ -85,7 +89,8 @@ export const useProductStore = create<ProductState>()((set, get) => ({
         products: [],
         currentProduct: null,
         isLoading: false,
-        error: ("error" in res.data && res.data.error) || "Failed to fetch products",
+        error:
+          ("error" in res.data && res.data.error) || "Failed to fetch products",
       });
     } catch (error) {
       console.error("Error fetching products:", error);
@@ -144,4 +149,3 @@ export const useProductStore = create<ProductState>()((set, get) => ({
     }
   },
 }));
-

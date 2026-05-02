@@ -104,6 +104,9 @@ const AdminProducts = () => {
                 Stoku
               </th>
               <th className="text-left px-5 py-3 text-xs font-medium text-muted-foreground uppercase">
+                Outlet
+              </th>
+              <th className="text-left px-5 py-3 text-xs font-medium text-muted-foreground uppercase">
                 Veprimet
               </th>
             </tr>
@@ -112,7 +115,7 @@ const AdminProducts = () => {
             {filtered.length === 0 ? (
               <tr>
                 <td
-                  colSpan={5}
+                  colSpan={6}
                   className="px-5 py-8 text-center text-sm text-muted-foreground"
                 >
                   {rows.length === 0
@@ -149,6 +152,28 @@ const AdminProducts = () => {
                     >
                       {p.inStock ? "Në stok" : "Jashtë stokut"}
                     </span>
+                  </td>
+                  <td className="px-5 py-3">
+                    {(() => {
+                      const product = recentProducts.find((x) => x.id === p.id);
+                      if (product?.isOutlet) {
+                        return (
+                          <div className="flex flex-col gap-1">
+                            <span className="text-xs px-2 py-1 rounded-full bg-orange-100 text-orange-700">
+                              Outlet
+                            </span>
+                            {product.outletDiscount && (
+                              <span className="text-xs text-muted-foreground">
+                                -{product.outletDiscount}€
+                              </span>
+                            )}
+                          </div>
+                        );
+                      }
+                      return (
+                        <span className="text-xs text-muted-foreground">-</span>
+                      );
+                    })()}
                   </td>
                   <td className="px-5 py-3">
                     <div className="flex items-center gap-2">

@@ -34,6 +34,10 @@ export type CreateProductPayload = {
   isActive?: boolean;
   /** Slugs matching mega menu / `?sub=` for the chosen category */
   subcategorySlugs?: string[];
+  isOutlet?: boolean;
+  outletDiscount?: number;
+  outletStock?: number;
+  condition?: "NEW" | "OPEN_BOX" | "REFURBISHED";
 };
 
 /** Body for `PUT /api/admin/products/:id` — same fields as create; all sent on save. */
