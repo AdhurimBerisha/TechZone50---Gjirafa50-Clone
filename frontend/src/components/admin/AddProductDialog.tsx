@@ -53,6 +53,12 @@ export function AddProductDialog({
   const [description, setDescription] = useState("");
   const [isFeatured, setIsFeatured] = useState(false);
   const [isActive, setIsActive] = useState(true);
+  const [isOutlet, setIsOutlet] = useState(false);
+  const [outletDiscount, setOutletDiscount] = useState("");
+  const [outletStock, setOutletStock] = useState("");
+  const [condition, setCondition] = useState<
+    "NEW" | "OPEN_BOX" | "REFURBISHED"
+  >("NEW");
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [subSlugs, setSubSlugs] = useState<string[]>([]);
@@ -87,6 +93,10 @@ export function AddProductDialog({
     setDescription("");
     setIsFeatured(false);
     setIsActive(true);
+    setIsOutlet(false);
+    setOutletDiscount("");
+    setOutletStock("");
+    setCondition("NEW");
     setSubSlugs([]);
     setFormError(null);
     setSubmitting(false);
@@ -164,6 +174,26 @@ export function AddProductDialog({
       parsedRating = n;
     }
 
+    let parsedOutletDiscount: number | undefined;
+    if (outletDiscount.trim() !== "") {
+      const n = Number(outletDiscount);
+      if (Number.isNaN(n) || n < 0) {
+        setFormError("Zbritja e outlet duhet të jetë numër jo negativ.");
+        return;
+      }
+      parsedOutletDiscount = n;
+    }
+
+    let parsedOutletStock: number | undefined;
+    if (outletStock.trim() !== "") {
+      const n = Number(outletStock);
+      if (Number.isNaN(n) || !Number.isInteger(n) || n < 0) {
+        setFormError("Stoku i outlet duhet të jetë numër i plotë jo negativ.");
+        return;
+      }
+      parsedOutletStock = n;
+    }
+
     const trimmedImage = imagePreview.trim();
     const payload = {
       name: trimmedName,
@@ -180,6 +210,10 @@ export function AddProductDialog({
       isFeatured,
       isActive,
       subcategorySlugs: subSlugs,
+      isOutlet,
+      outletDiscount: parsedOutletDiscount,
+      outletStock: parsedOutletStock,
+      condition,
     };
 
     setSubmitting(true);
@@ -423,6 +457,80 @@ export function AddProductDialog({
                   Aktiv në dyqan
                 </Label>
               </div>
+            </div>
+
+            <div className="grid gap-4 border-t pt-4">
+              <h3 className="text-lg font-semibold">Opsionet e Outlet</h3>
+
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  id="admin-product-outlet"
+                  checked={isOutlet}
+                  onCheckedChange={(v) => setIsOutlet(v === true)}
+                  disabled={submitting}
+                />
+                <Label htmlFor="admin-product-outlet" className="font-normal">
+                  Produkt Outlet
+                </Label>
+              </div>
+
+              {isOutlet && (
+                <>
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <div className="grid gap-2">
+                      <Label htmlFor="admin-product-outlet-discount">
+                        Zbritja e Outlet (€)
+                      </Label>
+                      <Input
+                        id="admin-product-outlet-discount"
+                        type="number"
+                        inputMode="decimal"
+                        min={0}
+                        step="0.01"
+                        value={outletDiscount}
+                        onChange={(e) => setOutletDiscount(e.target.value)}
+                        placeholder="0.00"
+                        disabled={submitting}
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="admin-product-outlet-stock">
+                        Stoku i Outlet
+                      </Label>
+                      <Input
+                        id="admin-product-outlet-stock"
+                        type="number"
+                        inputMode="numeric"
+                        min={0}
+                        step={1}
+                        value={outletStock}
+                        onChange={(e) => setOutletStock(e.target.value)}
+                        placeholder="0"
+                        disabled={submitting}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid gap-2">
+                    <Label htmlFor="admin-product-condition">Gjendja</Label>
+                    <select
+                      id="admin-product-condition"
+                      value={condition}
+                      onChange={(e) =>
+                        setCondition(
+                          e.target.value as "NEW" | "OPEN_BOX" | "REFURBISHED",
+                        )
+                      }
+                      disabled={submitting}
+                      className="h-8 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30"
+                    >
+                      <option value="NEW">I ri</option>
+                      <option value="OPEN_BOX">Paketë e hapur</option>
+                      <option value="REFURBISHED">I rinovuar</option>
+                    </select>
+                  </div>
+                </>
+              )}
             </div>
           </div>
 

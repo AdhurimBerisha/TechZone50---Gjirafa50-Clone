@@ -100,6 +100,10 @@ model Product {
   stock        Int       @default(0)
   isFeatured   Boolean   @default(false)
   isActive     Boolean   @default(true)
+  isOutlet     Boolean   @default(false)
+  outletDiscount Float?
+  outletStock  Int?
+  condition    ProductCondition @default(NEW)
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
@@ -191,6 +195,12 @@ enum PaymentStatus {
   COMPLETED
   FAILED
   REFUNDED
+}
+
+enum ProductCondition {
+  NEW
+  OPEN_BOX
+  REFURBISHED
 }
 
 model GiftCard {

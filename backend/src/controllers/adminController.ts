@@ -103,6 +103,10 @@ const getAllProducts = async (req: Request, res: Response) => {
         isFeatured: true,
         isActive: true,
         subcategorySlugs: true,
+        isOutlet: true,
+        outletDiscount: true,
+        outletStock: true,
+        condition: true,
         createdAt: true,
         updatedAt: true,
       },
@@ -196,6 +200,10 @@ const createProduct = async (req: Request, res: Response) => {
     isFeatured,
     isActive,
     subcategorySlugs: subcategorySlugsBody,
+    isOutlet,
+    outletDiscount,
+    outletStock,
+    condition,
   } = req.body;
 
   let imageUrl = image;
@@ -257,6 +265,32 @@ const createProduct = async (req: Request, res: Response) => {
       .json({ error: "stock must be a valid non-negative integer" });
   }
 
+  const parsedOutletDiscount =
+    outletDiscount !== undefined ? Number(outletDiscount) : undefined;
+  if (outletDiscount !== undefined && Number.isNaN(parsedOutletDiscount)) {
+    return res
+      .status(400)
+      .json({ error: "outletDiscount must be a valid number" });
+  }
+
+  const parsedOutletStock =
+    outletStock !== undefined ? Number(outletStock) : undefined;
+  if (
+    outletStock !== undefined &&
+    (!Number.isInteger(parsedOutletStock) || parsedOutletStock! < 0)
+  ) {
+    return res
+      .status(400)
+      .json({ error: "outletStock must be a valid non-negative integer" });
+  }
+
+  const validConditions = ["NEW", "OPEN_BOX", "REFURBISHED"];
+  if (condition !== undefined && !validConditions.includes(condition)) {
+    return res.status(400).json({
+      error: "condition must be one of: NEW, OPEN_BOX, REFURBISHED",
+    });
+  }
+
   const normalizedImages = Array.isArray(images)
     ? images.filter((item) => typeof item === "string")
     : typeof images === "string"
@@ -302,6 +336,10 @@ const createProduct = async (req: Request, res: Response) => {
         stock: parsedStock ?? 0,
         isFeatured: Boolean(isFeatured),
         isActive: isActive === undefined ? true : Boolean(isActive),
+        isOutlet: Boolean(isOutlet),
+        outletDiscount: parsedOutletDiscount ?? null,
+        outletStock: parsedOutletStock ?? null,
+        condition: condition || "NEW",
       },
     });
 
