@@ -56,7 +56,9 @@ export function AddProductDialog({
   const [isOutlet, setIsOutlet] = useState(false);
   const [outletDiscount, setOutletDiscount] = useState("");
   const [outletStock, setOutletStock] = useState("");
-  const [condition, setCondition] = useState<"NEW" | "OPEN_BOX" | "REFURBISHED">("NEW");
+  const [condition, setCondition] = useState<
+    "NEW" | "OPEN_BOX" | "REFURBISHED"
+  >("NEW");
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [subSlugs, setSubSlugs] = useState<string[]>([]);
@@ -476,7 +478,9 @@ export function AddProductDialog({
                 <>
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div className="grid gap-2">
-                      <Label htmlFor="admin-product-outlet-discount">Zbritja e Outlet (€)</Label>
+                      <Label htmlFor="admin-product-outlet-discount">
+                        Zbritja e Outlet (€)
+                      </Label>
                       <Input
                         id="admin-product-outlet-discount"
                         type="number"
@@ -490,7 +494,9 @@ export function AddProductDialog({
                       />
                     </div>
                     <div className="grid gap-2">
-                      <Label htmlFor="admin-product-outlet-stock">Stoku i Outlet</Label>
+                      <Label htmlFor="admin-product-outlet-stock">
+                        Stoku i Outlet
+                      </Label>
                       <Input
                         id="admin-product-outlet-stock"
                         type="number"
@@ -510,7 +516,11 @@ export function AddProductDialog({
                     <select
                       id="admin-product-condition"
                       value={condition}
-                      onChange={(e) => setCondition(e.target.value as "NEW" | "OPEN_BOX" | "REFURBISHED")}
+                      onChange={(e) =>
+                        setCondition(
+                          e.target.value as "NEW" | "OPEN_BOX" | "REFURBISHED",
+                        )
+                      }
                       disabled={submitting}
                       className="h-8 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30"
                     >

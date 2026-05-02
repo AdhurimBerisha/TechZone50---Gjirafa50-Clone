@@ -265,12 +265,16 @@ const createProduct = async (req: Request, res: Response) => {
       .json({ error: "stock must be a valid non-negative integer" });
   }
 
-  const parsedOutletDiscount = outletDiscount !== undefined ? Number(outletDiscount) : undefined;
+  const parsedOutletDiscount =
+    outletDiscount !== undefined ? Number(outletDiscount) : undefined;
   if (outletDiscount !== undefined && Number.isNaN(parsedOutletDiscount)) {
-    return res.status(400).json({ error: "outletDiscount must be a valid number" });
+    return res
+      .status(400)
+      .json({ error: "outletDiscount must be a valid number" });
   }
 
-  const parsedOutletStock = outletStock !== undefined ? Number(outletStock) : undefined;
+  const parsedOutletStock =
+    outletStock !== undefined ? Number(outletStock) : undefined;
   if (
     outletStock !== undefined &&
     (!Number.isInteger(parsedOutletStock) || parsedOutletStock! < 0)

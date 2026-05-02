@@ -138,7 +138,9 @@ const AdminProducts = () => {
                       />
                       <div>
                         <p className="text-sm font-medium">{p.name}</p>
-                        <p className="text-xs text-muted-foreground">{p.brand}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {p.brand}
+                        </p>
                       </div>
                     </div>
                   </td>
