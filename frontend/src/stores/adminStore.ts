@@ -51,7 +51,7 @@ interface AdminActions {
     status: string,
   ) => Promise<{ ok: true } | { ok: false; error: string }>;
   createProduct: (
-    payload: CreateProductPayload,
+    payload: CreateProductPayload | FormData,
   ) => Promise<{ ok: true } | { ok: false; error: string }>;
   updateProduct: (
     id: string,
@@ -236,9 +236,12 @@ export const useAdminStore = create<AdminStore>()(
       },
       createProduct: async (payload) => {
         try {
+          const isFormData = payload instanceof FormData;
           const res = await api.post<
             { success: true; product: BackendProduct } | { error: string }
-          >("/api/admin/products", payload);
+          >("/api/admin/products", payload, {
+            headers: isFormData ? { "Content-Type": "multipart/form-data" } : undefined,
+          });
           const data = res.data;
           if ("success" in data && data.success === true && "product" in data) {
             const created = data.product;

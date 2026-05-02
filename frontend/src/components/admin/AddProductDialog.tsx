@@ -45,7 +45,8 @@ export function AddProductDialog({ open, onOpenChange }: AddProductDialogProps) 
   const [oldPrice, setOldPrice] = useState("");
   const [stock, setStock] = useState("0");
   const [rating, setRating] = useState("");
-  const [image, setImage] = useState("");
+  const [image, setImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>("");
   const [description, setDescription] = useState("");
   const [isFeatured, setIsFeatured] = useState(false);
   const [isActive, setIsActive] = useState(true);
@@ -78,7 +79,8 @@ export function AddProductDialog({ open, onOpenChange }: AddProductDialogProps) 
     setOldPrice("");
     setStock("0");
     setRating("");
-    setImage("");
+    setImage(null);
+    setImagePreview("");
     setDescription("");
     setIsFeatured(false);
     setIsActive(true);
@@ -157,7 +159,7 @@ export function AddProductDialog({ open, onOpenChange }: AddProductDialogProps) 
       parsedRating = n;
     }
 
-    const trimmedImage = image.trim();
+    const trimmedImage = imagePreview.trim();
     const payload = {
       name: trimmedName,
       slug: trimmedSlug,
@@ -176,7 +178,25 @@ export function AddProductDialog({ open, onOpenChange }: AddProductDialogProps) 
     };
 
     setSubmitting(true);
-    const result = await createProduct(payload);
+
+    // Create FormData for file upload
+    const formData = new FormData();
+    Object.entries(payload).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        if (Array.isArray(value)) {
+          value.forEach((item) => formData.append(key, item));
+        } else {
+          formData.append(key, String(value));
+        }
+      }
+    });
+
+    // Add the image file if present
+    if (image) {
+      formData.append("image", image);
+    }
+
+    const result = await createProduct(formData);
     setSubmitting(false);
 
     if (result.ok) {
@@ -330,14 +350,35 @@ export function AddProductDialog({ open, onOpenChange }: AddProductDialogProps) 
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="admin-product-image">URL e imazhit</Label>
+              <Label htmlFor="admin-product-image">Imazhi i produktit</Label>
               <Input
                 id="admin-product-image"
-                value={image}
-                onChange={(e) => setImage(e.target.value)}
-                placeholder="https://..."
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  const file = e.target.files?.[0] || null;
+                  setImage(file);
+                  if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                      setImagePreview(e.target?.result as string);
+                    };
+                    reader.readAsDataURL(file);
+                  } else {
+                    setImagePreview("");
+                  }
+                }}
                 disabled={submitting}
               />
+              {imagePreview && (
+                <div className="mt-2">
+                  <img
+                    src={imagePreview}
+                    alt="Preview"
+                    className="max-w-32 max-h-32 object-cover rounded border"
+                  />
+                </div>
+              )}
             </div>
 
             <div className="grid gap-2">

@@ -1,6 +1,7 @@
 import type { Request, Response } from "express";
 import { OrderStatus, PaymentStatus } from "../generated/prisma/client";
 import { prisma } from "../lib/prisma";
+import cloudinary from "../lib/cloudinary";
 
 type MegaLink = { slug?: string };
 type MegaColumn = { links?: MegaLink[] };
@@ -197,6 +198,32 @@ const createProduct = async (req: Request, res: Response) => {
     subcategorySlugs: subcategorySlugsBody,
   } = req.body;
 
+  let imageUrl = image;
+
+  // Handle file upload if present
+  if (req.file) {
+    try {
+      const result = await new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+          {
+            folder: "products",
+            public_id: slug || `product-${Date.now()}`,
+            resource_type: "image",
+          },
+          (error, result) => {
+            if (error) reject(error);
+            else resolve(result);
+          }
+        );
+        stream.end(req.file!.buffer);
+      });
+      imageUrl = (result as any).secure_url;
+    } catch (uploadError) {
+      console.error("Error uploading image to Cloudinary:", uploadError);
+      return res.status(500).json({ error: "Failed to upload image" });
+    }
+  }
+
   if (!name || !slug || !category || !categorySlug || price === undefined) {
     return res.status(400).json({
       error: "name, slug, category, categorySlug and price are required",
@@ -236,6 +263,11 @@ const createProduct = async (req: Request, res: Response) => {
       ? [images]
       : [];
 
+  // If we uploaded a file, add it to images array
+  if (imageUrl && !normalizedImages.includes(imageUrl)) {
+    normalizedImages.unshift(imageUrl);
+  }
+
   const subcategorySlugs = parseSubcategorySlugsFromBody(subcategorySlugsBody);
 
   try {
@@ -265,7 +297,7 @@ const createProduct = async (req: Request, res: Response) => {
         price: parsedPrice,
         oldPrice: parsedOldPrice,
         rating: parsedRating ?? 0,
-        image,
+        image: imageUrl,
         images: normalizedImages,
         stock: parsedStock ?? 0,
         isFeatured: Boolean(isFeatured),

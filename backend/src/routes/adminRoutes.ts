@@ -15,13 +15,14 @@ import {
   getAllGiftCards,
   createGiftCard,
 } from "../controllers/adminController";
+import { upload } from "../middleware/upload";
 
 const router = Router();
 
 router.get("/dashboard", getAdminDashboard);
 router.get("/users", getAllUsers);
 router.get("/products", getAllProducts);
-router.post("/products", createProduct);
+router.post("/products", upload.single("image"), createProduct);
 router.put("/products/:id", updateProduct);
 router.get("/orders", getAdminOrders);
 router.get("/top-products", getTopSellingProducts);
