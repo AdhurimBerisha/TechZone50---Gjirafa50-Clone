@@ -19,6 +19,10 @@ export interface Product {
   description: string;
   inStock: boolean;
   installment?: string;
+  isOutlet?: boolean;
+  outletDiscount?: number;
+  outletStock?: number;
+  condition?: "NEW" | "OPEN_BOX" | "REFURBISHED";
 }
 
 export interface MegaMenuColumn {

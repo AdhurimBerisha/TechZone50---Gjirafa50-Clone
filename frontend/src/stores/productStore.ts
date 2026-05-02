@@ -45,6 +45,10 @@ export function toUiProduct(p: BackendProduct): UiProduct {
     specs: {},
     description: p.description ?? "",
     inStock: p.stock > 0,
+    isOutlet: p.isOutlet,
+    outletDiscount: p.outletDiscount ?? undefined,
+    outletStock: p.outletStock ?? undefined,
+    condition: p.condition,
   };
 }
 
@@ -58,7 +62,7 @@ interface ProductState {
   isLoading: boolean;
   error: string | null;
 
-  fetchAllProducts: () => Promise<void>;
+  fetchAllProducts: (outletOnly?: boolean) => Promise<void>;
   fetchProductById: (id: string) => Promise<void>;
   getProductById: (id: string) => UiProduct | undefined;
   reset: () => void;
@@ -75,11 +79,14 @@ export const useProductStore = create<ProductState>()((set, get) => ({
 
   getProductById: (id) => get().products.find((p) => p.id === id),
 
-  fetchAllProducts: async () => {
+  fetchAllProducts: async (outletOnly = false) => {
     try {
       set({ isLoading: true, error: null });
 
-      const res = await api.get<GetAllProductsResponse>("/api/products");
+      const query = outletOnly ? "?outlet=true" : "";
+      const res = await api.get<GetAllProductsResponse>(
+        `/api/products${query}`,
+      );
       if ("success" in res.data && res.data.success === true) {
         set({ products: res.data.products.map(toUiProduct), isLoading: false });
         return;

@@ -1,9 +1,19 @@
-import { products } from "@/data/products";
+import { useEffect } from "react";
 import ProductCard from "@/components/ProductCard";
+import { useProductStore } from "@/stores/productStore";
 import { Tag } from "lucide-react";
 
 const OutletPage = () => {
-  const outletProducts = products.filter((p) => p.oldPrice);
+  const products = useProductStore((s) => s.products);
+  const isLoading = useProductStore((s) => s.isLoading);
+  const fetchAllProducts = useProductStore((s) => s.fetchAllProducts);
+  const outletProducts = products.filter((p) => p.isOutlet);
+
+  useEffect(() => {
+    if (products.length === 0) {
+      void fetchAllProducts(true);
+    }
+  }, [fetchAllProducts, products.length]);
 
   return (
     <div className="max-w-[1320px] mx-auto px-4 lg:px-8 py-6">
@@ -18,11 +28,25 @@ const OutletPage = () => {
         </p>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-        {outletProducts.map((product) => (
-          <ProductCard key={product.id} product={product} />
-        ))}
-      </div>
+      {isLoading && (
+        <div className="text-center py-16 text-muted-foreground">
+          Duke ngarkuar produktet e outlet...
+        </div>
+      )}
+
+      {!isLoading && outletProducts.length === 0 && (
+        <div className="text-center py-16 text-muted-foreground">
+          Nuk u gjet asnjë produkt Outlet.
+        </div>
+      )}
+
+      {!isLoading && outletProducts.length > 0 && (
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+          {outletProducts.map((product) => (
+            <ProductCard key={product.id} product={product} />
+          ))}
+        </div>
+      )}
     </div>
   );
 };
