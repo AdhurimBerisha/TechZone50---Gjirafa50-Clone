@@ -191,14 +191,14 @@ export const useReviewStore = create<ReviewState>()((set, get) => ({
       );
 
       if ("success" in res.data && res.data.success === true) {
-        // Update the review in the local state
+        const updatedReview = res.data.review;
         set((state) => ({
-          reviews: state.reviews.map((review) =>
-            review.id === reviewId ? res.data.review : review,
+          reviews: state.reviews.map((r) =>
+            r.id === reviewId ? updatedReview : r,
           ),
           isLoading: false,
         }));
-        return res.data.review;
+        return updatedReview;
       }
 
       set({
