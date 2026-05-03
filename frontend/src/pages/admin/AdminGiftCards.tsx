@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { useAuth } from "@clerk/react";
 import { Loader2, Plus, Search, Gift, Copy, Check, X } from "lucide-react";
 import { api } from "@/lib/api";
 
@@ -47,6 +48,7 @@ const statusLabels: Record<string, string> = {
 };
 
 const AdminGiftCards = () => {
+  const { getToken } = useAuth();
   const [giftCards, setGiftCards] = useState<GiftCard[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -64,12 +66,18 @@ const AdminGiftCards = () => {
     expiresAt: "",
   });
 
-  const fetchGiftCards = async () => {
+  const fetchGiftCards = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
+      const token = await getToken();
+      if (!token) {
+        setError("Sesioni skadoi. Hyni përsëri.");
+        return;
+      }
       const res = await api.get<{ success: true; giftCards: GiftCard[] }>(
         "/api/admin/gift-cards",
+        { headers: { Authorization: `Bearer ${token}` } },
       );
       if ("success" in res.data && res.data.success === true) {
         setGiftCards(res.data.giftCards);
@@ -82,19 +90,25 @@ const AdminGiftCards = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [getToken]);
 
   useEffect(() => {
     void fetchGiftCards();
-  }, []);
+  }, [fetchGiftCards]);
 
   const handleCreateGiftCard = async (e: React.FormEvent) => {
     e.preventDefault();
     setCreating(true);
     try {
+      const token = await getToken();
+      if (!token) {
+        setError("Sesioni skadoi. Hyni përsëri.");
+        return;
+      }
       const res = await api.post<{ success: true; giftCard: GiftCard }>(
         "/api/admin/gift-cards",
         formData,
+        { headers: { Authorization: `Bearer ${token}` } },
       );
       if ("success" in res.data && res.data.success === true) {
         setGiftCards((prev) => [res.data.giftCard, ...prev]);

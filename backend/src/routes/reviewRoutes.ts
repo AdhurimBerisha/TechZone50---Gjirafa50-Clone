@@ -8,6 +8,7 @@ import {
   moderateReview,
 } from "../controllers/reviewController";
 import { requireClerkAuth } from "../middleware/authMiddleware";
+import { requireAdmin } from "../middleware/adminMiddleware";
 
 const router = Router();
 
@@ -20,7 +21,12 @@ router.put("/:reviewId", requireClerkAuth, updateReview);
 router.delete("/:reviewId", requireClerkAuth, deleteReview);
 
 // Admin routes
-router.get("/admin/all", requireClerkAuth, getAllReviews);
-router.post("/admin/:reviewId/moderate", requireClerkAuth, moderateReview);
+router.get("/admin/all", requireClerkAuth, requireAdmin, getAllReviews);
+router.post(
+  "/admin/:reviewId/moderate",
+  requireClerkAuth,
+  requireAdmin,
+  moderateReview,
+);
 
 export default router;

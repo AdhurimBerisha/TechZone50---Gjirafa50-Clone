@@ -1,3 +1,4 @@
+import { useAuth } from "@clerk/react";
 import { useAdminStore } from "@/stores/adminStore";
 import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
@@ -23,6 +24,7 @@ const statusLabels: Record<string, string> = {
 const ALL_STATUSES = Object.keys(statusLabels);
 
 const AdminOrders = () => {
+  const { getToken } = useAuth();
   const fetchAllOrders = useAdminStore((s) => s.fetchOrders);
   const isLoading = useAdminStore((s) => s.isLoading);
   const error = useAdminStore((s) => s.error);
@@ -36,13 +38,19 @@ const AdminOrders = () => {
   } | null>(null);
 
   useEffect(() => {
-    void fetchAllOrders();
-  }, [fetchAllOrders]);
+    void (async () => {
+      const token = await getToken();
+      if (!token) return;
+      void fetchAllOrders(token);
+    })();
+  }, [fetchAllOrders, getToken]);
 
   const handleStatusChange = async (orderId: string, newStatus: string) => {
+    const token = await getToken();
+    if (!token) return;
     setUpdatingId(orderId);
     setUpdateError(null);
-    const result = await updateOrderStatus(orderId, newStatus);
+    const result = await updateOrderStatus(token, orderId, newStatus);
     if (!result.ok) {
       setUpdateError({ id: orderId, msg: result.error });
     }

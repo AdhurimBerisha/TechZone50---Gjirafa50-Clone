@@ -160,10 +160,20 @@ const syncUser = async (req: Request, res: Response) => {
   }
 
   try {
+    const suffix = process.env.ADMIN_BOOTSTRAP_EMAIL_SUFFIX?.trim();
+    const emailLower = String(email).toLowerCase();
+    const assignAdminOnCreate =
+      !!suffix && emailLower.endsWith(suffix.toLowerCase());
+
     const user = await prisma.user.upsert({
       where: { clerkId },
       update: { email },
-      create: { clerkId, email, name },
+      create: {
+        clerkId,
+        email,
+        name,
+        ...(assignAdminOnCreate ? { role: "ADMIN" as const } : {}),
+      },
     });
     res.json({ success: true, user });
   } catch (error) {

@@ -16,8 +16,12 @@ import {
   createGiftCard,
 } from "../controllers/adminController";
 import { upload } from "../middleware/upload";
+import { requireClerkAuth } from "../middleware/authMiddleware";
+import { requireAdmin } from "../middleware/adminMiddleware";
 
 const router = Router();
+
+router.use(requireClerkAuth, requireAdmin);
 
 router.get("/dashboard", getAdminDashboard);
 router.get("/users", getAllUsers);

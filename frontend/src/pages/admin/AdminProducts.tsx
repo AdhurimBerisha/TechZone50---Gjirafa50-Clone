@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useAuth } from "@clerk/react";
 import { Plus, Edit, Trash2, Search, Loader2 } from "lucide-react";
 import { useAdminStore } from "@/stores/adminStore";
 import { toUiProduct, type BackendProduct } from "@/stores/productStore";
@@ -6,6 +7,7 @@ import { AddProductDialog } from "@/components/admin/AddProductDialog";
 import { EditProductDialog } from "@/components/admin/EditProductDialog";
 
 const AdminProducts = () => {
+  const { getToken } = useAuth();
   const [search, setSearch] = useState("");
   const [addOpen, setAddOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
@@ -33,8 +35,12 @@ const AdminProducts = () => {
   );
 
   useEffect(() => {
-    void fetchAllProducts();
-  }, [fetchAllProducts]);
+    void (async () => {
+      const token = await getToken();
+      if (!token) return;
+      void fetchAllProducts(token);
+    })();
+  }, [fetchAllProducts, getToken]);
 
   if (isLoading) {
     return (

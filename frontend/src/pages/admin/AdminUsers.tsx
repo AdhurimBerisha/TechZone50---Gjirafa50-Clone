@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { Users as UsersIcon } from "lucide-react";
+import { useAuth } from "@clerk/react";
 import { useAdminStore } from "@/stores/adminStore";
 
 function formatJoined(iso: string) {
@@ -15,14 +16,19 @@ function formatJoined(iso: string) {
 }
 
 const AdminUsers = () => {
+  const { getToken } = useAuth();
   const recentUsers = useAdminStore((s) => s.recentUsers);
   const isLoading = useAdminStore((s) => s.isLoading);
   const error = useAdminStore((s) => s.error);
   const fetchAllUsers = useAdminStore((s) => s.fetchAllUsers);
 
   useEffect(() => {
-    void fetchAllUsers();
-  }, [fetchAllUsers]);
+    void (async () => {
+      const token = await getToken();
+      if (!token) return;
+      void fetchAllUsers(token);
+    })();
+  }, [fetchAllUsers, getToken]);
 
   return (
     <div className="space-y-3">

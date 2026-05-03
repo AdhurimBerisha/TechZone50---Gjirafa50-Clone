@@ -1,4 +1,5 @@
 import { useEffect, useMemo } from "react";
+import { useAuth } from "@clerk/react";
 import { Package, ShoppingCart, Users, DollarSign } from "lucide-react";
 import { useAdminStore } from "@/stores/adminStore";
 
@@ -27,6 +28,7 @@ const statusLabels: Record<string, string> = {
 };
 
 const AdminDashboard = () => {
+  const { getToken } = useAuth();
   const fetchDashboardStats = useAdminStore((s) => s.fetchDashboardStats);
   const fetchOrders = useAdminStore((s) => s.fetchOrders);
   const fetchTopSellingProducts = useAdminStore(
@@ -43,11 +45,16 @@ const AdminDashboard = () => {
   const fetchTotalRevenue = useAdminStore((s) => s.fetchTotalRevenue);
 
   useEffect(() => {
-    void fetchDashboardStats();
-    void fetchOrders();
-    void fetchTopSellingProducts();
-    void fetchTotalRevenue();
+    void (async () => {
+      const token = await getToken();
+      if (!token) return;
+      void fetchDashboardStats(token);
+      void fetchOrders(token);
+      void fetchTopSellingProducts(token);
+      void fetchTotalRevenue(token);
+    })();
   }, [
+    getToken,
     fetchDashboardStats,
     fetchOrders,
     fetchTopSellingProducts,

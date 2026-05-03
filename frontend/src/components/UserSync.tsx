@@ -7,64 +7,95 @@ import { useWishlistStore } from "../stores/wishlistStore";
 import { useCartStore } from "../stores/cartStore";
 
 const UserSync = ({ children }: { children: React.ReactNode }) => {
-  const { user, isSignedIn } = useUser();
-  const { getToken } = useAuth();
+  const { user, isSignedIn, isLoaded: userLoaded } = useUser();
+  const { getToken, isLoaded: authLoaded, userId } = useAuth();
   const setCurrentUser = useAuthStore((s) => s.setCurrentUser);
   const setError = useAuthStore((s) => s.setError);
 
+  const clerkReady = authLoaded && userLoaded;
+  const primaryEmail =
+    user?.primaryEmailAddress?.emailAddress ??
+    user?.emailAddresses?.[0]?.emailAddress ??
+    "";
+  const syncDisplayName = user?.fullName || user?.firstName || "";
+
   useEffect(() => {
-    if (isSignedIn && user) {
-      const syncUser = async () => {
-        try {
-          setError(null);
-          const token = await getToken();
-          if (!token) return;
+    if (!clerkReady) return;
 
-          await api.post<{ success: true; user: unknown }>(
-            "/api/users/sync",
-            {
-              email:
-                user.primaryEmailAddress?.emailAddress ||
-                user.emailAddresses?.[0]?.emailAddress,
-              name: user.fullName || user.firstName,
-            },
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            },
-          );
+    if (!isSignedIn) {
+      setCurrentUser(null);
+      setError(null);
+      return;
+    }
 
-          const me = await api.get<{ success: true; user: any }>("/api/users/me", {
+    if (!userId || !primaryEmail) return;
+
+    let cancelled = false;
+
+    const run = async () => {
+      try {
+        setError(null);
+        const token = await getToken();
+        if (!token || cancelled) return;
+
+        await api.post<{ success: true; user: unknown }>(
+          "/api/users/sync",
+          {
+            email: primaryEmail,
+            name: syncDisplayName || undefined,
+          },
+          {
             headers: {
               Authorization: `Bearer ${token}`,
             },
-          });
+          },
+        );
 
-          setCurrentUser(me.data.user);
+        if (cancelled) return;
 
-          try {
-            await useWishlistStore.getState().fetchWishlist(token);
-          } catch (wishlistErr) {
-            console.error("Failed to load wishlist:", wishlistErr);
-          }
-          try {
-            await useCartStore.getState().fetchCartFromServer(token);
-          } catch (cartErr) {
-            console.error("Failed to load cart:", cartErr);
-          }
-        } catch (error) {
-          console.error("Failed to sync user:", error);
-          const axiosError = error as AxiosError<{ error?: string }>;
-          setError(axiosError.response?.data?.error ?? "Failed to sync user");
+        const me = await api.get<{ success: true; user: any }>("/api/users/me", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (cancelled) return;
+
+        setCurrentUser(me.data.user);
+
+        try {
+          await useWishlistStore.getState().fetchWishlist(token);
+        } catch (wishlistErr) {
+          console.error("Failed to load wishlist:", wishlistErr);
         }
-      };
-      syncUser();
-    }
-    if (!isSignedIn) {
-      setCurrentUser(null);
-    }
-  }, [user, isSignedIn, getToken, setCurrentUser, setError]);
+        try {
+          await useCartStore.getState().fetchCartFromServer(token);
+        } catch (cartErr) {
+          console.error("Failed to load cart:", cartErr);
+        }
+      } catch (error) {
+        if (cancelled) return;
+        console.error("Failed to sync user:", error);
+        const axiosError = error as AxiosError<{ error?: string }>;
+        setError(axiosError.response?.data?.error ?? "Failed to sync user");
+      }
+    };
+
+    void run();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    clerkReady,
+    isSignedIn,
+    userId,
+    primaryEmail,
+    syncDisplayName,
+    getToken,
+    setCurrentUser,
+    setError,
+  ]);
 
   return <>{children}</>;
 };
