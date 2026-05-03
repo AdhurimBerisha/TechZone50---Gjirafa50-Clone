@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useAuth } from "@clerk/react";
 import { Loader2 } from "lucide-react";
 import {
   Dialog,
@@ -40,6 +41,7 @@ export function EditProductDialog({
   onOpenChange,
   product,
 }: EditProductDialogProps) {
+  const { getToken } = useAuth();
   const updateProduct = useAdminStore((s) => s.updateProduct);
   const categories = useCategoryStore((s) => s.categories);
 
@@ -187,7 +189,13 @@ export function EditProductDialog({
     };
 
     setSubmitting(true);
-    const result = await updateProduct(product.id, payload);
+    const token = await getToken();
+    if (!token) {
+      setFormError("Sesioni skadoi. Hyni përsëri.");
+      setSubmitting(false);
+      return;
+    }
+    const result = await updateProduct(token, product.id, payload);
     setSubmitting(false);
 
     if (result.ok) {

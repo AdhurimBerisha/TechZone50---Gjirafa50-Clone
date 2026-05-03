@@ -1,6 +1,7 @@
 import { Search, Heart, ShoppingCart, User } from "lucide-react";
 import { Link, useNavigate } from "react-router";
 import { useUser } from "@clerk/react";
+import { useAuthStore } from "@/stores/authStore";
 import { useCartStore } from "@/stores/cartStore";
 import { useWishlistStore } from "@/stores/wishlistStore";
 import { useUIStore } from "@/stores/uiStore";
@@ -13,11 +14,8 @@ const Header = () => {
   const { searchQuery, setSearchQuery } = useUIStore();
   const [localSearch, setLocalSearch] = useState(searchQuery);
   const { isSignedIn, user } = useUser();
-
-  const email =
-    user?.primaryEmailAddress?.emailAddress ??
-    user?.emailAddresses?.[0]?.emailAddress;
-  const isAdmin = email?.endsWith("@techzone50.com") ?? false;
+  const currentUser = useAuthStore((s) => s.currentUser);
+  const isAdmin = currentUser?.role === "ADMIN";
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();

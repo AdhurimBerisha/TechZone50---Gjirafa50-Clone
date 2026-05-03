@@ -4,6 +4,10 @@ import { AxiosError } from "axios";
 import { api } from "@/lib/api";
 import type { BackendProduct } from "@/stores/productStore";
 
+const adminAuth = (token: string) => ({
+  headers: { Authorization: `Bearer ${token}` },
+});
+
 interface AdminState {
   isLoading: boolean;
   error: string | null;
@@ -44,23 +48,33 @@ export type CreateProductPayload = {
 export type UpdateProductPayload = CreateProductPayload;
 
 interface AdminActions {
-  fetchAllProducts: () => Promise<void>;
-  fetchAllUsers: () => Promise<void>;
-  fetchOrders: () => Promise<void>;
-  fetchDashboardStats: () => Promise<void>;
-  fetchTopSellingProducts: () => Promise<void>;
-  fetchTotalRevenue: () => Promise<void>;
+  fetchAllProducts: (token: string) => Promise<void>;
+  fetchAllUsers: (token: string) => Promise<void>;
+  fetchOrders: (token: string) => Promise<void>;
+  fetchDashboardStats: (token: string) => Promise<void>;
+  fetchTopSellingProducts: (token: string) => Promise<void>;
+  fetchTotalRevenue: (token: string) => Promise<void>;
   updateOrderStatus: (
+    token: string,
     id: string,
     status: string,
   ) => Promise<{ ok: true } | { ok: false; error: string }>;
   createProduct: (
+    token: string,
     payload: CreateProductPayload | FormData,
   ) => Promise<{ ok: true } | { ok: false; error: string }>;
   updateProduct: (
+    token: string,
     id: string,
     payload: UpdateProductPayload,
   ) => Promise<{ ok: true } | { ok: false; error: string }>;
+  createGiftCard: (
+    token: string,
+    amount: number,
+  ) => Promise<
+    | { ok: true; code: string; amount: number }
+    | { ok: false; error: string }
+  >;
 }
 
 type AdminStore = AdminState & AdminActions;
@@ -118,13 +132,13 @@ export const useAdminStore = create<AdminStore>()(
   persist(
     (set) => ({
       ...initialState,
-      fetchAllProducts: async () => {
+      fetchAllProducts: async (token) => {
         try {
           set({ isLoading: true, error: null });
           const res = await api.get<{
             success: true;
             products: BackendProduct[];
-          }>("/api/admin/products");
+          }>("/api/admin/products", adminAuth(token));
           if ("success" in res.data && res.data.success === true) {
             set({
               totalProducts: res.data.products.length,
@@ -144,11 +158,12 @@ export const useAdminStore = create<AdminStore>()(
           });
         }
       },
-      fetchAllUsers: async () => {
+      fetchAllUsers: async (token) => {
         try {
           set({ isLoading: true, error: null });
           const res = await api.get<{ success: true; users: User[] }>(
             "/api/admin/users",
+            adminAuth(token),
           );
           if ("success" in res.data && res.data.success === true) {
             set({
@@ -168,14 +183,18 @@ export const useAdminStore = create<AdminStore>()(
           });
         }
       },
-      fetchDashboardStats: async () => {
+      fetchDashboardStats: async (token) => {
         try {
           set({ isLoading: true, error: null });
           const [productsRes, usersRes] = await Promise.all([
             api.get<{ success: true; products: BackendProduct[] }>(
               "/api/admin/products",
+              adminAuth(token),
             ),
-            api.get<{ success: true; users: User[] }>("/api/admin/users"),
+            api.get<{ success: true; users: User[] }>(
+              "/api/admin/users",
+              adminAuth(token),
+            ),
           ]);
           const productsOk =
             "success" in productsRes.data && productsRes.data.success === true;
@@ -207,12 +226,12 @@ export const useAdminStore = create<AdminStore>()(
           });
         }
       },
-      fetchTopSellingProducts: async () => {
+      fetchTopSellingProducts: async (token) => {
         try {
           set({ isLoading: true, error: null });
           const res = await api.get<
             { success: true; topProducts: TopProduct[] } | { error: string }
-          >("/api/admin/top-products");
+          >("/api/admin/top-products", adminAuth(token));
           const data = res.data;
           if (
             "success" in data &&
@@ -238,16 +257,11 @@ export const useAdminStore = create<AdminStore>()(
           });
         }
       },
-      createProduct: async (payload) => {
+      createProduct: async (token, payload) => {
         try {
-          const isFormData = payload instanceof FormData;
           const res = await api.post<
             { success: true; product: BackendProduct } | { error: string }
-          >("/api/admin/products", payload, {
-            headers: isFormData
-              ? { "Content-Type": "multipart/form-data" }
-              : undefined,
-          });
+          >("/api/admin/products", payload, adminAuth(token));
           const data = res.data;
           if ("success" in data && data.success === true && "product" in data) {
             const created = data.product;
@@ -272,11 +286,15 @@ export const useAdminStore = create<AdminStore>()(
           };
         }
       },
-      updateProduct: async (id, payload) => {
+      updateProduct: async (token, id, payload) => {
         try {
           const res = await api.put<
             { success: true; product: BackendProduct } | { error: string }
-          >(`/api/admin/products/${encodeURIComponent(id)}`, payload);
+          >(
+            `/api/admin/products/${encodeURIComponent(id)}`,
+            payload,
+            adminAuth(token),
+          );
           const data = res.data;
           if ("success" in data && data.success === true && "product" in data) {
             const updated = data.product;
@@ -302,12 +320,12 @@ export const useAdminStore = create<AdminStore>()(
           };
         }
       },
-      fetchOrders: async () => {
+      fetchOrders: async (token) => {
         try {
           set({ isLoading: true, error: null });
           const res = await api.get<
             { success: true; orders: Order[] } | { error: string }
-          >("/api/admin/orders");
+          >("/api/admin/orders", adminAuth(token));
           const data = res.data;
           if ("success" in data && data.success === true && "orders" in data) {
             const orders = data.orders;
@@ -335,12 +353,12 @@ export const useAdminStore = create<AdminStore>()(
         }
       },
 
-      fetchTotalRevenue: async () => {
+      fetchTotalRevenue: async (token) => {
         try {
           set({ isLoading: true, error: null });
           const res = await api.get<
             { success: true; totalRevenue: number } | { error: string }
-          >("/api/admin/revenue");
+          >("/api/admin/revenue", adminAuth(token));
           const data = res.data;
           if (
             "success" in data &&
@@ -365,12 +383,16 @@ export const useAdminStore = create<AdminStore>()(
           });
         }
       },
-      updateOrderStatus: async (id: string, status: string) => {
+      updateOrderStatus: async (token: string, id: string, status: string) => {
         try {
           set({ isLoading: true, error: null });
           const res = await api.put<
             { success: true; order: Order } | { error: string }
-          >(`/api/admin/orders/${encodeURIComponent(id)}/status`, { status });
+          >(
+            `/api/admin/orders/${encodeURIComponent(id)}/status`,
+            { status },
+            adminAuth(token),
+          );
           const data = res.data;
           if ("success" in data && data.success === true && "order" in data) {
             const updated = data.order;
@@ -398,13 +420,13 @@ export const useAdminStore = create<AdminStore>()(
         }
       },
 
-      createGiftCard: async (amount: number) => {
+      createGiftCard: async (token, amount) => {
         try {
           set({ isLoading: true, error: null });
           const res = await api.post<{
             success: true;
             giftCard: { code: string; amount: number };
-          }>(`/api/admin/gift-cards`, { amount });
+          }>(`/api/admin/gift-cards`, { amount }, adminAuth(token));
           const data = res.data;
           if (
             "success" in data &&
@@ -425,13 +447,15 @@ export const useAdminStore = create<AdminStore>()(
           set({ isLoading: false, error: msg });
           return { ok: false as const, error: msg };
         } catch (error) {
-          console.error("Error fetching revenue:", error);
+          console.error("Error creating gift card:", error);
           const axiosError = error as AxiosError<{ error?: string }>;
+          const msg =
+            axiosError.response?.data?.error ?? "Failed to create gift card";
           set({
-            error:
-              axiosError.response?.data?.error ?? "Failed to fetch revenue",
+            error: msg,
             isLoading: false,
           });
+          return { ok: false as const, error: msg };
         }
       },
     }),

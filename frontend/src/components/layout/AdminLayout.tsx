@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { Outlet, Link, useLocation, useNavigate } from "react-router";
 import { useAuth, useUser } from "@clerk/react";
+import { useAuthStore } from "@/stores/authStore";
 import {
   LayoutDashboard,
   Package,
@@ -23,23 +24,57 @@ const adminNav = [
 ];
 
 const AdminLayout = () => {
-  const { signOut, isSignedIn } = useAuth();
+  const { signOut, isSignedIn, isLoaded } = useAuth();
   const { user } = useUser();
+  const currentUser = useAuthStore((s) => s.currentUser);
+  const authError = useAuthStore((s) => s.error);
   const location = useLocation();
   const navigate = useNavigate();
 
   const email =
     user?.primaryEmailAddress?.emailAddress ??
     user?.emailAddresses?.[0]?.emailAddress;
-  const isAdmin = email?.endsWith("@techzone50.com") ?? false;
 
   useEffect(() => {
-    if (!isSignedIn || !isAdmin) {
+    if (!isLoaded) return;
+    if (!isSignedIn) {
       navigate("/login");
+      return;
     }
-  }, [isSignedIn, isAdmin, navigate]);
+    if (authError) {
+      navigate("/");
+      return;
+    }
+    if (currentUser && currentUser.role !== "ADMIN") {
+      navigate("/");
+    }
+  }, [isLoaded, isSignedIn, currentUser, authError, navigate]);
 
-  if (!isSignedIn || !user || !isAdmin) {
+  if (!isLoaded) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-muted">
+        <p className="text-muted-foreground">Duke ngarkuar…</p>
+      </div>
+    );
+  }
+
+  if (!isSignedIn || !user) {
+    return null;
+  }
+
+  if (authError) {
+    return null;
+  }
+
+  if (!currentUser) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-muted">
+        <p className="text-muted-foreground">Duke ngarkuar panelin…</p>
+      </div>
+    );
+  }
+
+  if (currentUser.role !== "ADMIN") {
     return null;
   }
 

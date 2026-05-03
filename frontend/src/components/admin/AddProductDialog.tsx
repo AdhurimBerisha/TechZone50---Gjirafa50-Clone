@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useAuth } from "@clerk/react";
 import { Loader2 } from "lucide-react";
 import {
   Dialog,
@@ -37,6 +38,7 @@ export function AddProductDialog({
   open,
   onOpenChange,
 }: AddProductDialogProps) {
+  const { getToken } = useAuth();
   const createProduct = useAdminStore((s) => s.createProduct);
   const categories = useCategoryStore((s) => s.categories);
 
@@ -235,7 +237,14 @@ export function AddProductDialog({
       formData.append("image", image);
     }
 
-    const result = await createProduct(formData);
+    const token = await getToken();
+    if (!token) {
+      setFormError("Sesioni skadoi. Hyni përsëri.");
+      setSubmitting(false);
+      return;
+    }
+
+    const result = await createProduct(token, formData);
     setSubmitting(false);
 
     if (result.ok) {
