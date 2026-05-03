@@ -24,8 +24,9 @@ const adminNav = [
 ];
 
 const AdminLayout = () => {
-  const { signOut, isSignedIn, isLoaded } = useAuth();
-  const { user } = useUser();
+  const { signOut, isSignedIn, isLoaded: authLoaded, userId } = useAuth();
+  const { user, isLoaded: userLoaded } = useUser();
+  const clerkReady = authLoaded && userLoaded;
   const currentUser = useAuthStore((s) => s.currentUser);
   const authError = useAuthStore((s) => s.error);
   const location = useLocation();
@@ -35,9 +36,13 @@ const AdminLayout = () => {
     user?.primaryEmailAddress?.emailAddress ??
     user?.emailAddresses?.[0]?.emailAddress;
 
+  const isAdminRole =
+    currentUser != null &&
+    String(currentUser.role).toUpperCase() === "ADMIN";
+
   useEffect(() => {
-    if (!isLoaded) return;
-    if (!isSignedIn) {
+    if (!clerkReady) return;
+    if (!isSignedIn || !userId) {
       navigate("/login");
       return;
     }
@@ -45,12 +50,15 @@ const AdminLayout = () => {
       navigate("/");
       return;
     }
-    if (currentUser && currentUser.role !== "ADMIN") {
+    if (
+      currentUser &&
+      String(currentUser.role).toUpperCase() !== "ADMIN"
+    ) {
       navigate("/");
     }
-  }, [isLoaded, isSignedIn, currentUser, authError, navigate]);
+  }, [clerkReady, isSignedIn, userId, currentUser, authError, navigate]);
 
-  if (!isLoaded) {
+  if (!clerkReady) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-muted">
         <p className="text-muted-foreground">Duke ngarkuar…</p>
@@ -58,7 +66,7 @@ const AdminLayout = () => {
     );
   }
 
-  if (!isSignedIn || !user) {
+  if (!isSignedIn || !userId) {
     return null;
   }
 
@@ -74,7 +82,7 @@ const AdminLayout = () => {
     );
   }
 
-  if (currentUser.role !== "ADMIN") {
+  if (!isAdminRole) {
     return null;
   }
 
@@ -143,7 +151,7 @@ const AdminLayout = () => {
             <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
               <Users className="h-4 w-4 text-primary" />
             </div>
-            {user.fullName ?? email}
+            {user?.fullName ?? email ?? userId}
           </div>
         </header>
         <main className="flex-1 p-6">

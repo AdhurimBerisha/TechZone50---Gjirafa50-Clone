@@ -20,6 +20,8 @@ const UserSync = ({ children }: { children: React.ReactNode }) => {
   const syncDisplayName = user?.fullName || user?.firstName || "";
 
   useEffect(() => {
+    // getToken is intentionally read from the latest Clerk closure without listing it in deps
+    // (see comment at end of effect).
     if (!clerkReady) return;
 
     if (!isSignedIn) {
@@ -86,13 +88,15 @@ const UserSync = ({ children }: { children: React.ReactNode }) => {
     return () => {
       cancelled = true;
     };
+    // Intentionally omit getToken: Clerk often gives a new function reference each
+    // render, which would retrigger this effect endlessly and cancel sync before
+    // setCurrentUser runs (breaking /admin and post-login redirect).
   }, [
     clerkReady,
     isSignedIn,
     userId,
     primaryEmail,
     syncDisplayName,
-    getToken,
     setCurrentUser,
     setError,
   ]);

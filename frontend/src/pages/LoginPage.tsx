@@ -6,7 +6,7 @@ import { useAuthStore } from "@/stores/authStore";
 const LoginPage = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { isSignedIn, user, isLoaded: userLoaded } = useUser();
+  const { isSignedIn, isLoaded: userLoaded } = useUser();
   const { isLoaded: authLoaded, userId } = useAuth();
   const clerkReady = authLoaded && userLoaded;
   const currentUser = useAuthStore((s) => s.currentUser);
@@ -23,8 +23,6 @@ const LoginPage = () => {
     if (!currentUser) return;
     navigate(currentUser.role === "ADMIN" ? "/admin" : "/");
   }, [clerkReady, isSignedIn, userId, currentUser, authError, navigate]);
-
-  const showAuthForms = clerkReady && !isSignedIn;
 
   return (
     <div className="max-w-[1320px] mx-auto px-4 lg:px-8 py-12">
@@ -52,14 +50,14 @@ const LoginPage = () => {
                 routing="path"
                 path="/login"
                 signInUrl="/login"
-                signUpFallbackRedirectUrl="/"
+                fallbackRedirectUrl="/"
               />
             ) : (
               <SignIn
                 routing="path"
                 path="/login"
                 signUpUrl="/login?mode=register"
-                signInFallbackRedirectUrl="/"
+                fallbackRedirectUrl="/"
               />
             )}
           </div>

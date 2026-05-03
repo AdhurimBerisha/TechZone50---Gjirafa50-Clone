@@ -1,4 +1,4 @@
-import { Search, Heart, ShoppingCart, User } from "lucide-react";
+import { Search, Heart, ShoppingCart, User, LayoutDashboard } from "lucide-react";
 import { Link, useNavigate } from "react-router";
 import { useUser } from "@clerk/react";
 import { useAuthStore } from "@/stores/authStore";
@@ -15,7 +15,9 @@ const Header = () => {
   const [localSearch, setLocalSearch] = useState(searchQuery);
   const { isSignedIn, user } = useUser();
   const currentUser = useAuthStore((s) => s.currentUser);
-  const isAdmin = currentUser?.role === "ADMIN";
+  const isAdmin =
+    currentUser != null &&
+    String(currentUser.role).toUpperCase() === "ADMIN";
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -82,9 +84,19 @@ const Header = () => {
             )}
           </Link>
 
+          {isSignedIn && isAdmin ? (
+            <Link
+              to="/admin"
+              className="flex items-center gap-2 rounded-lg border border-white/30 bg-white/5 px-3 py-2 text-sm font-medium text-white hover:bg-white/10 hover:text-primary transition-colors"
+            >
+              <LayoutDashboard className="h-5 w-5 shrink-0" />
+              <span className="hidden sm:inline">Paneli</span>
+            </Link>
+          ) : null}
+
           {isSignedIn ? (
             <Link
-              to={isAdmin ? "/admin" : "/account"}
+              to="/account"
               className="flex items-center gap-2 text-white hover:text-primary transition-colors"
             >
               <User className="h-5 w-5" />
