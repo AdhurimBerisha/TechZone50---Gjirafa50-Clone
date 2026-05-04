@@ -16,7 +16,8 @@ Built with a scalable architecture, this project demonstrates real-world e-comme
 - Admin dashboard for managing:
   - Products (create, update, delete)  
   - Orders  
-  - Users  
+  - Users
+  - Gift Cards
 - Image uploads and storage with cloud integration  
 - Responsive design for all devices  
 
