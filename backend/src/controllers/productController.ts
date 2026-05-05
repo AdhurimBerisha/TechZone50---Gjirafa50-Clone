@@ -6,10 +6,21 @@ const getProducts = async (req: Request, res: Response) => {
   try {
     const outletQuery = String(req.query.outlet || "").toLowerCase();
     const outletOnly = outletQuery === "true" || outletQuery === "1";
+    const searchQuery = String(req.query.q || "").trim(); // 👈 add
+
     const where: Prisma.ProductWhereInput = {};
 
     if (outletOnly) {
       where.isOutlet = true;
+    }
+
+    if (searchQuery) {
+      // 👈 add
+      where.OR = [
+        { name: { contains: searchQuery, mode: "insensitive" } },
+        { description: { contains: searchQuery, mode: "insensitive" } },
+        { category: { contains: searchQuery, mode: "insensitive" } },
+      ];
     }
 
     const products = await prisma.product.findMany({ where });
