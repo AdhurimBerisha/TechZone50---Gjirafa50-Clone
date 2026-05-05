@@ -58,19 +58,25 @@ type GetAllProductsResponse =
 
 interface ProductState {
   products: UiProduct[];
+  searchResults: UiProduct[];
   currentProduct: UiProduct | null;
   isLoading: boolean;
+  isSearching: boolean;
   error: string | null;
 
   fetchAllProducts: (outletOnly?: boolean) => Promise<void>;
   fetchProductById: (id: string) => Promise<void>;
+  fetchSearchResults: (query: string) => Promise<void>;
+  clearSearchResults: () => void;
   getProductById: (id: string) => UiProduct | undefined;
   reset: () => void;
 }
 
 export const useProductStore = create<ProductState>()((set, get) => ({
   products: [],
+  searchResults: [],
   currentProduct: null,
+  isSearching: false,
   isLoading: false,
   error: null,
 
@@ -78,6 +84,8 @@ export const useProductStore = create<ProductState>()((set, get) => ({
     set({ products: [], currentProduct: null, isLoading: false, error: null }),
 
   getProductById: (id) => get().products.find((p) => p.id === id),
+
+  clearSearchResults: () => set({ searchResults: [] }),
 
   fetchAllProducts: async (outletOnly = false) => {
     try {
@@ -152,6 +160,37 @@ export const useProductStore = create<ProductState>()((set, get) => ({
         currentProduct: null,
         isLoading: false,
         error: axiosError.response?.data?.error ?? "Failed to fetch product",
+      });
+    }
+  },
+  fetchSearchResults: async (query: string) => {
+    if (!query.trim()) {
+      set({ searchResults: [] });
+      return;
+    }
+    try {
+      set({ isSearching: true, error: null });
+      const res = await api.get<GetAllProductsResponse>(
+        `/api/products?q=${encodeURIComponent(query)}`,
+      );
+      if ("success" in res.data && res.data.success === true) {
+        set({
+          searchResults: res.data.products.map(toUiProduct),
+          isSearching: false,
+        });
+        return;
+      }
+      set({
+        searchResults: [],
+        isSearching: false,
+        error: ("error" in res.data && res.data.error) || "Search failed",
+      });
+    } catch (error) {
+      const axiosError = error as AxiosError<{ error?: string }>;
+      set({
+        searchResults: [],
+        isSearching: false,
+        error: axiosError.response?.data?.error ?? "Search failed",
       });
     }
   },
