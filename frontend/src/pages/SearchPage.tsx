@@ -1,5 +1,6 @@
+import { useEffect } from "react";
 import { useSearchParams } from "react-router";
-import { products } from "@/data/products";
+import { useProductStore } from "@/stores/productStore";
 import ProductCard from "@/components/ProductCard";
 import { Search } from "lucide-react";
 
@@ -7,12 +8,13 @@ const SearchPage = () => {
   const [searchParams] = useSearchParams();
   const query = searchParams.get("q") || "";
 
-  const results = products.filter(
-    (p) =>
-      p.name.toLowerCase().includes(query.toLowerCase()) ||
-      p.brand.toLowerCase().includes(query.toLowerCase()) ||
-      p.category.toLowerCase().includes(query.toLowerCase()),
-  );
+  const { searchResults, isSearching, fetchSearchResults, clearSearchResults } =
+    useProductStore();
+
+  useEffect(() => {
+    fetchSearchResults(query);
+    return () => clearSearchResults();
+  }, [query]);
 
   return (
     <div className="max-w-[1320px] mx-auto px-4 lg:px-8 py-6">
@@ -22,13 +24,19 @@ const SearchPage = () => {
           Rezultatet për "<span className="text-primary">{query}</span>"
         </h1>
         <span className="text-sm text-muted-foreground">
-          ({results.length} produkte)
+          ({searchResults.length} produkte)
         </span>
       </div>
 
-      {results.length > 0 ? (
+      {isSearching ? (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-          {results.map((product) => (
+          {Array.from({ length: 10 }).map((_, i) => (
+            <div key={i} className="h-64 rounded-lg bg-muted animate-pulse" />
+          ))}
+        </div>
+      ) : searchResults.length > 0 ? (
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+          {searchResults.map((product) => (
             <ProductCard key={product.id} product={product} />
           ))}
         </div>
