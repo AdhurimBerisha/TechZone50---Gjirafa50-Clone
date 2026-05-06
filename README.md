@@ -67,10 +67,15 @@ This project requires a few environment variables to run properly.
 - `DATABASE_URL` — your_database_url
 - `CLERK_PUBLISHABLE_KEY` — your_clerk_publishable_key
 - `CLERK_SECRET_KEY` — your_clerk_secret_key
+- `CLOUDINARY_NAME` — your_cloudinary_name
+- `CLOUDINARY_KEY` — your_cloudinary_key
+- `CLOUDINARY+SECRET` — your_cloudinary_secret_key
 
 
 ### frontend `.env` variables include:
 - `VITE_CLERK_PUBLISHABLE_KEY` — your_clerk_publishable_key
+- `STRIPE_SECRET_KEY` — your_stripe_secret_key
+- `VITE_STRIPE_PUBLISHABLE_KEY` — your_stripe_publishable_key
 
 
 4. Run the development servers
