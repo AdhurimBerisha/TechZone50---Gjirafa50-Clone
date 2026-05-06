@@ -9,6 +9,7 @@ import {
   Save,
   Loader2,
   Gift,
+  MapPin,
 } from "lucide-react";
 
 import { useAuthStore } from "@/stores/authStore";
@@ -17,6 +18,7 @@ import { useCartStore } from "@/stores/cartStore";
 
 import { ProfileOrders } from "@/components/account/ProfileOrders";
 import { ProfileGiftCards } from "@/components/account/ProfileGiftCards";
+import { ProfileAddresses } from "@/components/account/ProfileAddresses";
 
 const navLinkClass = ({ isActive }: { isActive: boolean }) =>
   [
@@ -32,6 +34,7 @@ const AccountPage = () => {
 
   const isOrdersSection = location.pathname === "/account/orders";
   const isGiftCardsSection = location.pathname === "/account/gift-cards";
+  const isAddressesSection = location.pathname === "/account/addresses";
 
   const { isSignedIn, signOut, getToken } = useAuth();
   const { user } = useUser();
@@ -153,7 +156,6 @@ const AccountPage = () => {
         {/* SIDEBAR */}
         <div className="bg-white rounded-lg border border-border p-6">
           <div className="flex items-center gap-3 mb-6">
-            {/* AVATAR */}
             <div className="w-12 h-12 rounded-full overflow-hidden bg-primary/10 flex items-center justify-center relative">
               {avatarUrl ? (
                 <img src={avatarUrl} className="w-full h-full object-cover" />
@@ -161,7 +163,6 @@ const AccountPage = () => {
                 <User className="h-6 w-6 text-primary" />
               )}
 
-              {/* upload overlay */}
               <input
                 type="file"
                 accept="image/*"
@@ -174,14 +175,8 @@ const AccountPage = () => {
               <p className="font-medium">{name || "Përdorues"}</p>
               <p className="text-sm text-muted-foreground">{displayEmail}</p>
 
-              {currentUser?.role && (
-                <p className="text-xs text-muted-foreground mt-1">
-                  Roli: {currentUser.role}
-                </p>
-              )}
-
               {uploadingAvatar && (
-                <p className="text-xs text-muted-foreground mt-1">
+                <p className="text-xs text-muted-foreground">
                   Uploading avatar...
                 </p>
               )}
@@ -199,6 +194,11 @@ const AccountPage = () => {
               Porositë
             </NavLink>
 
+            <NavLink to="/account/addresses" className={navLinkClass}>
+              <MapPin className="h-4 w-4" />
+              Adresat
+            </NavLink>
+
             <NavLink to="/account/gift-cards" className={navLinkClass}>
               <Gift className="h-4 w-4" />
               Gift Cards
@@ -206,15 +206,15 @@ const AccountPage = () => {
 
             <Link
               to="/wishlist"
-              className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-muted text-sm text-muted-foreground"
+              className="flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground"
             >
               <Heart className="h-4 w-4" />
-              Lista e dëshirave
+              Wishlist
             </Link>
 
             <button
               onClick={handleLogout}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-muted text-sm text-destructive w-full text-left"
+              className="flex items-center gap-2 px-3 py-2 text-sm text-red-500 w-full text-left"
             >
               <LogOut className="h-4 w-4" />
               Dil
@@ -224,10 +224,12 @@ const AccountPage = () => {
 
         {/* CONTENT */}
         <div className="lg:col-span-3 space-y-6">
-          {isGiftCardsSection ? (
-            <ProfileGiftCards />
-          ) : isOrdersSection ? (
+          {isOrdersSection ? (
             <ProfileOrders />
+          ) : isGiftCardsSection ? (
+            <ProfileGiftCards />
+          ) : isAddressesSection ? (
+            <ProfileAddresses />
           ) : (
             <div className="bg-white rounded-lg border border-border p-6">
               <h2 className="font-semibold mb-4">Informatat personale</h2>
@@ -271,9 +273,7 @@ const AccountPage = () => {
                 </div>
               </div>
 
-              {error && (
-                <p className="mt-3 text-sm text-destructive">{error}</p>
-              )}
+              {error && <p className="mt-3 text-sm text-red-500">{error}</p>}
 
               {successMsg && (
                 <p className="mt-3 text-sm text-green-600">{successMsg}</p>
