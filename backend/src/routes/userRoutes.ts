@@ -22,8 +22,10 @@ import {
   removeFromCart,
   clearCart,
   orderGiftCard,
+  uploadAvatar,
 } from "../controllers/userController";
 import { requireClerkAuth } from "../middleware/authMiddleware";
+import { upload } from "../middleware/upload";
 
 const router = Router();
 
@@ -61,5 +63,6 @@ router.post(
   completeGiftCardStripeCheckout,
 );
 router.post("/gift-card/order", requireClerkAuth, orderGiftCard);
+router.post("/upload-avatar", upload.single("avatar"), uploadAvatar);
 
 export default router;

@@ -9,6 +9,8 @@ import {
 import { prisma } from "../lib/prisma";
 import { getClerkUserId } from "../middleware/authMiddleware";
 import Stripe from "stripe";
+import cloudinary from "../lib/cloudinary";
+import { upload } from "../middleware/upload";
 
 const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
 const stripe =
@@ -153,7 +155,7 @@ async function createGiftCardOrder(
 
 const syncUser = async (req: Request, res: Response) => {
   const clerkId = getClerkUserId(req);
-  const { email, name, avatar } = req.body;
+  const { email, name } = req.body;
 
   if (!clerkId || !email) {
     return res.status(400).json({ error: "clerkId and email are required" });
@@ -167,15 +169,18 @@ const syncUser = async (req: Request, res: Response) => {
 
     const user = await prisma.user.upsert({
       where: { clerkId },
-      update: { email, name, avatar },
+      update: {
+        email,
+        name,
+      },
       create: {
         clerkId,
         email,
         name,
-        avatar,
         ...(assignAdminOnCreate ? { role: "ADMIN" as const } : {}),
       },
     });
+
     res.json({ success: true, user });
   } catch (error) {
     console.error("Error syncing user:", error);
@@ -1123,6 +1128,47 @@ const completeGiftCardStripeCheckout = async (req: Request, res: Response) => {
   }
 };
 
+const uploadAvatar = async (req: Request, res: Response) => {
+  try {
+    const clerkId = getClerkUserId(req);
+
+    if (!clerkId) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({ error: "No file uploaded" });
+    }
+
+    // upload to cloudinary
+    const uploadResult = await cloudinary.uploader.upload_stream(
+      {
+        folder: "avatars",
+        resource_type: "image",
+      },
+      async (error, result) => {
+        if (error || !result) {
+          return res.status(500).json({ error: "Cloudinary upload failed" });
+        }
+
+        const user = await prisma.user.update({
+          where: { clerkId },
+          data: {
+            avatar: result.secure_url,
+          },
+        });
+
+        return res.json({ success: true, user });
+      },
+    );
+
+    uploadResult.end(req.file.buffer);
+  } catch (error) {
+    console.error("Error uploading avatar:", error);
+    res.status(500).json({ error: "Failed to upload avatar" });
+  }
+};
+
 export {
   syncUser,
   updateProfile,
@@ -1146,4 +1192,5 @@ export {
   removeFromCart,
   clearCart,
   orderGiftCard,
+  uploadAvatar,
 };

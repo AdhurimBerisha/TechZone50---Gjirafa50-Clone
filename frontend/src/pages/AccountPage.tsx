@@ -36,13 +36,17 @@ const AccountPage = () => {
   const { isSignedIn, signOut, getToken } = useAuth();
   const { user } = useUser();
 
-  const { currentUser, updateUser, syncUser, error } = useAuthStore();
+  const { currentUser, updateUser, syncUser, uploadAvatar, error } =
+    useAuthStore();
 
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [bio, setBio] = useState("");
+
   const [isSaving, setIsSaving] = useState(false);
   const [successMsg, setSuccessMsg] = useState("");
+
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
   // redirect if not logged in
   useEffect(() => {
@@ -51,7 +55,7 @@ const AccountPage = () => {
     }
   }, [isSignedIn, navigate]);
 
-  // sync Clerk user → DB (NO AppInitializer needed)
+  // sync Clerk → DB
   useEffect(() => {
     const runSync = async () => {
       try {
@@ -66,7 +70,6 @@ const AccountPage = () => {
             user.emailAddresses?.[0]?.emailAddress ||
             "",
           name: user.fullName,
-          avatar: user.imageUrl,
         });
       } catch (err) {
         console.error("Sync error:", err);
@@ -76,7 +79,7 @@ const AccountPage = () => {
     runSync();
   }, [isSignedIn, user, getToken, syncUser]);
 
-  // hydrate form from store
+  // hydrate form
   useEffect(() => {
     if (currentUser) {
       setName(currentUser.name ?? "");
@@ -95,6 +98,7 @@ const AccountPage = () => {
 
   const avatarUrl = currentUser?.avatar || user.imageUrl;
 
+  // profile update
   const handleSave = async () => {
     setIsSaving(true);
     setSuccessMsg("");
@@ -116,11 +120,29 @@ const AccountPage = () => {
     phone !== (currentUser?.phone ?? "") ||
     bio !== (currentUser?.bio ?? "");
 
+  // logout
   const handleLogout = async () => {
     await signOut();
     useWishlistStore.getState().clearWishlist();
     useCartStore.getState().clearCart();
     navigate("/");
+  };
+
+  // avatar upload
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setUploadingAvatar(true);
+
+      const token = await getToken();
+      if (!token) return;
+
+      await uploadAvatar(token, file);
+    } finally {
+      setUploadingAvatar(false);
+    }
   };
 
   return (
@@ -131,16 +153,21 @@ const AccountPage = () => {
         {/* SIDEBAR */}
         <div className="bg-white rounded-lg border border-border p-6">
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-12 h-12 rounded-full overflow-hidden bg-primary/10 flex items-center justify-center">
+            {/* AVATAR */}
+            <div className="w-12 h-12 rounded-full overflow-hidden bg-primary/10 flex items-center justify-center relative">
               {avatarUrl ? (
-                <img
-                  src={avatarUrl}
-                  alt="avatar"
-                  className="w-full h-full object-cover"
-                />
+                <img src={avatarUrl} className="w-full h-full object-cover" />
               ) : (
                 <User className="h-6 w-6 text-primary" />
               )}
+
+              {/* upload overlay */}
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleAvatarChange}
+                className="absolute inset-0 opacity-0 cursor-pointer"
+              />
             </div>
 
             <div>
@@ -150,6 +177,12 @@ const AccountPage = () => {
               {currentUser?.role && (
                 <p className="text-xs text-muted-foreground mt-1">
                   Roli: {currentUser.role}
+                </p>
+              )}
+
+              {uploadingAvatar && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  Uploading avatar...
                 </p>
               )}
             </div>
