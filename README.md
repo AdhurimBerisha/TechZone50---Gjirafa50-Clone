@@ -69,7 +69,7 @@ This project requires a few environment variables to run properly.
 - `CLERK_SECRET_KEY` — your_clerk_secret_key
 - `CLOUDINARY_NAME` — your_cloudinary_name
 - `CLOUDINARY_KEY` — your_cloudinary_key
-- `CLOUDINARY+SECRET` — your_cloudinary_secret_key
+- `CLOUDINARY_SECRET` — your_cloudinary_secret_key
 
 
 ### frontend `.env` variables include:
