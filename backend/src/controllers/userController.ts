@@ -153,7 +153,7 @@ async function createGiftCardOrder(
 
 const syncUser = async (req: Request, res: Response) => {
   const clerkId = getClerkUserId(req);
-  const { email, name } = req.body;
+  const { email, name, avatar } = req.body;
 
   if (!clerkId || !email) {
     return res.status(400).json({ error: "clerkId and email are required" });
@@ -167,11 +167,12 @@ const syncUser = async (req: Request, res: Response) => {
 
     const user = await prisma.user.upsert({
       where: { clerkId },
-      update: { email },
+      update: { email, name, avatar },
       create: {
         clerkId,
         email,
         name,
+        avatar,
         ...(assignAdminOnCreate ? { role: "ADMIN" as const } : {}),
       },
     });
