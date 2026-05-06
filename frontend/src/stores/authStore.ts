@@ -16,7 +16,9 @@ export interface User {
   role: UserRole;
 }
 
-type UpdateUserPayload = Partial<Pick<User, "name" | "phone" | "bio" | "avatar">>;
+type UpdateUserPayload = Partial<
+  Pick<User, "name" | "phone" | "bio" | "avatar">
+>;
 
 interface AuthState {
   currentUser: User | null;
@@ -26,6 +28,18 @@ interface AuthState {
   setCurrentUser: (user: User | null) => void;
   setError: (error: string | null) => void;
   reset: () => void;
+
+  syncUser: (
+    token: string,
+    data: {
+      email: string;
+      name?: string | null;
+      avatar?: string | null;
+    },
+  ) => Promise<void>;
+
+  fetchCurrentUser: (token: string) => Promise<void>;
+
   updateUser: (token: string, data: UpdateUserPayload) => Promise<void>;
 }
 
@@ -37,12 +51,77 @@ export const useAuthStore = create<AuthState>()(
       error: null,
 
       setCurrentUser: (user) => set({ currentUser: user }),
+
       setError: (error) => set({ error }),
-      reset: () => set({ currentUser: null, isHydrating: false, error: null }),
+
+      reset: () =>
+        set({
+          currentUser: null,
+          isHydrating: false,
+          error: null,
+        }),
+
+      syncUser: async (token, data) => {
+        try {
+          set({ error: null });
+
+          const res = await api.post<{ success: true; user: User }>(
+            "/api/users/sync",
+            data,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            },
+          );
+
+          set({ currentUser: res.data.user });
+        } catch (error) {
+          console.error("Error syncing user:", error);
+
+          const axiosError = error as AxiosError<{ error?: string }>;
+
+          set({
+            error: axiosError.response?.data?.error ?? "Failed to sync user",
+          });
+
+          throw error;
+        }
+      },
+
+      fetchCurrentUser: async (token) => {
+        try {
+          set({ error: null });
+
+          const res = await api.get<{ success: true; user: User }>(
+            "/api/users/me",
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            },
+          );
+
+          set({ currentUser: res.data.user });
+        } catch (error) {
+          console.error("Error fetching current user:", error);
+
+          const axiosError = error as AxiosError<{ error?: string }>;
+
+          set({
+            error:
+              axiosError.response?.data?.error ??
+              "Failed to fetch current user",
+          });
+
+          throw error;
+        }
+      },
 
       updateUser: async (token, data) => {
         try {
           set({ error: null });
+
           const res = await api.put<{ success: true; user: User }>(
             "/api/users/profile",
             data,
@@ -52,20 +131,26 @@ export const useAuthStore = create<AuthState>()(
               },
             },
           );
+
           set({ currentUser: res.data.user });
         } catch (error) {
           console.error("Error updating user:", error);
+
           const axiosError = error as AxiosError<{ error?: string }>;
+
           set({
             error: axiosError.response?.data?.error ?? "Failed to update user",
           });
+
           throw error;
         }
       },
     }),
     {
       name: "techstore50-auth",
-      partialize: (state) => ({ currentUser: state.currentUser }),
+      partialize: (state) => ({
+        currentUser: state.currentUser,
+      }),
     },
   ),
 );
