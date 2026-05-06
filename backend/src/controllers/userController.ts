@@ -1169,6 +1169,123 @@ const uploadAvatar = async (req: Request, res: Response) => {
   }
 };
 
+const addAddress = async (req: Request, res: Response) => {
+  const clerkId = getClerkUserId(req);
+
+  const {
+    fullName,
+    phone,
+    email,
+    street,
+    city,
+    state,
+    zipCode,
+    country,
+    isDefault,
+  } = req.body;
+
+  if (!clerkId) return res.status(401).json({ error: "Unauthorized" });
+
+  const user = await prisma.user.findUnique({ where: { clerkId } });
+  if (!user) return res.status(404).json({ error: "User not found" });
+
+  const address = await prisma.address.create({
+    data: {
+      userId: user.id,
+      fullName,
+      phone,
+      email,
+      street,
+      city,
+      state,
+      zipCode,
+      country,
+      isDefault: Boolean(isDefault),
+    },
+  });
+
+  // optional: update defaultAddressId
+  if (isDefault) {
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { defaultAddressId: address.id },
+    });
+  }
+
+  return res.json({ success: true, address });
+};
+
+const getAddresses = async (req: Request, res: Response) => {
+  const clerkId = getClerkUserId(req);
+
+  if (!clerkId) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { clerkId },
+    include: { addresses: true },
+  });
+
+  return res.json({
+    success: true,
+    addresses: user?.addresses || [],
+  });
+};
+
+const updateAddress = async (req: Request, res: Response) => {
+  const clerkId = getClerkUserId(req);
+  const { id } = req.params;
+
+  const addressId = Array.isArray(id) ? id[0] : id;
+
+  if (!clerkId || !addressId) {
+    return res.status(400).json({ error: "Invalid request" });
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { clerkId },
+  });
+
+  if (!user) {
+    return res.status(404).json({ error: "User not found" });
+  }
+
+  const address = await prisma.address.findFirst({
+    where: {
+      id: addressId,
+      userId: user.id, // ✅ now guaranteed string
+    },
+  });
+
+  if (!address) {
+    return res.status(404).json({ error: "Address not found" });
+  }
+
+  const updated = await prisma.address.update({
+    where: { id: addressId },
+    data: req.body,
+  });
+
+  return res.json({ success: true, address: updated });
+};
+
+const deleteAddress = async (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  const addressId = Array.isArray(id) ? id[0] : id;
+
+  if (!addressId) {
+    return res.status(400).json({ error: "Address ID is required" });
+  }
+
+  await prisma.address.delete({
+    where: { id: addressId },
+  });
+
+  return res.json({ success: true });
+};
+
 export {
   syncUser,
   updateProfile,
@@ -1193,4 +1310,8 @@ export {
   clearCart,
   orderGiftCard,
   uploadAvatar,
+  addAddress,
+  deleteAddress,
+  updateAddress,
+  getAddresses,
 };
