@@ -39,6 +39,7 @@ interface AuthState {
   ) => Promise<void>;
 
   fetchCurrentUser: (token: string) => Promise<void>;
+  uploadAvatar: (token: string, file: File) => Promise<void>;
 
   updateUser: (token: string, data: UpdateUserPayload) => Promise<void>;
 }
@@ -142,6 +143,33 @@ export const useAuthStore = create<AuthState>()(
             error: axiosError.response?.data?.error ?? "Failed to update user",
           });
 
+          throw error;
+        }
+      },
+      uploadAvatar: async (token, file: File) => {
+        try {
+          set({ error: null });
+
+          const formData = new FormData();
+          formData.append("avatar", file);
+
+          const res = await api.post<{ success: true; user: User }>(
+            "/api/users/upload-avatar",
+            formData,
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+                "Content-Type": "multipart/form-data",
+              },
+            },
+          );
+
+          set({ currentUser: res.data.user });
+        } catch (error) {
+          const axiosError = error as AxiosError<{ error?: string }>;
+          set({
+            error: axiosError.response?.data?.error ?? "Upload failed",
+          });
           throw error;
         }
       },
