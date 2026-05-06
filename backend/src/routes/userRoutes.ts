@@ -23,6 +23,10 @@ import {
   clearCart,
   orderGiftCard,
   uploadAvatar,
+  getAddresses,
+  addAddress,
+  deleteAddress,
+  updateAddress,
 } from "../controllers/userController";
 import { requireClerkAuth } from "../middleware/authMiddleware";
 import { upload } from "../middleware/upload";
@@ -64,5 +68,10 @@ router.post(
 );
 router.post("/gift-card/order", requireClerkAuth, orderGiftCard);
 router.post("/upload-avatar", upload.single("avatar"), uploadAvatar);
+
+router.get("/", getAddresses);
+router.post("/", addAddress);
+router.put("/:id", updateAddress);
+router.delete("/:id", deleteAddress);
 
 export default router;
