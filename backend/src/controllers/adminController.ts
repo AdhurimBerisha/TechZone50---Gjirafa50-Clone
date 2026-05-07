@@ -755,6 +755,68 @@ const createGiftCard = async (req: Request, res: Response) => {
   }
 };
 
+const createAdminSettings = async (req: Request, res: Response) => {
+  try {
+    const existing = await prisma.storeSettings.findUnique({
+      where: { id: "default" },
+    });
+
+    if (existing) {
+      return res
+        .status(400)
+        .json({ error: "Store settings already exist. Use update instead." });
+    }
+
+    const {
+      storeName,
+      storeEmail,
+      storePhone,
+      storeDescription,
+      street,
+      city,
+      state,
+      zipCode,
+      shippingPrice,
+      freeShippingThreshold,
+      deliveryTime,
+      metaTitle,
+      metaDescription,
+      facebook,
+      instagram,
+      tiktok,
+    } = req.body;
+
+    const settings = await prisma.storeSettings.create({
+      data: {
+        id: "default",
+        storeName,
+        storeEmail,
+        storePhone,
+        storeDescription,
+        street,
+        city,
+        state,
+        zipCode,
+        shippingPrice: shippingPrice ? parseFloat(shippingPrice) : 0,
+        freeShippingThreshold: freeShippingThreshold
+          ? parseFloat(freeShippingThreshold)
+          : null,
+        deliveryTime,
+        metaTitle,
+        metaDescription,
+        facebook,
+        instagram,
+        tiktok,
+      },
+    });
+
+    return res.status(201).json(settings);
+  } catch (error) {
+    console.error("Error creating admin settings", error);
+    return res.status(500).json({ error: "Failed to create admin settings" });
+  }
+};
+
 export {
   getAdminDashboard,
   getAllUsers,
@@ -770,4 +832,5 @@ export {
   updateOrderStatus,
   getAllGiftCards,
   createGiftCard,
+  createAdminSettings,
 };
