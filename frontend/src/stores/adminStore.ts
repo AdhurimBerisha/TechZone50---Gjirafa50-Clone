@@ -75,7 +75,12 @@ interface AdminActions {
     { ok: true; code: string; amount: number } | { ok: false; error: string }
   >;
   createAdminSettings: (
-    // 👈 add this
+    token: string,
+    settings: Partial<AdminSettings>,
+  ) => Promise<
+    { ok: true; settings: AdminSettings } | { ok: false; error: string }
+  >;
+  updateAdminSettings: (
     token: string,
     settings: Partial<AdminSettings>,
   ) => Promise<
@@ -495,6 +500,46 @@ export const useAdminStore = create<AdminStore>()(
               : "Failed to create admin settings";
           set({ isLoading: false, error: msg });
           return { ok: false as const, error: msg };
+        } catch (error) {
+          console.error("Error creating admin settings:", error);
+          const axiosError = error as AxiosError<{ error?: string }>;
+          const msg =
+            axiosError.response?.data?.error ??
+            "Failed to create admin settings";
+          set({
+            error: msg,
+            isLoading: false,
+          });
+          return { ok: false as const, error: msg };
+        }
+      },
+      updateAdminSettings: async (token, settings) => {
+        try {
+          set({ isLoading: true, error: null });
+          const res = await api.put<{ success: true; settings: AdminSettings }>(
+            `/api/admin/settings`,
+            settings,
+            adminAuth(token),
+          );
+          const data = res.data;
+          if (
+            "success" in data &&
+            data.success === true &&
+            "settings" in data
+          ) {
+            set({ isLoading: false, error: null });
+            return {
+              ok: true as const,
+              settings: data.settings,
+            };
+          } else {
+            const msg =
+              "error" in data && typeof data.error === "string"
+                ? data.error
+                : "Failed to update admin settings";
+            set({ isLoading: false, error: msg });
+            return { ok: false as const, error: msg };
+          }
         } catch (error) {
           console.error("Error creating admin settings:", error);
           const axiosError = error as AxiosError<{ error?: string }>;
