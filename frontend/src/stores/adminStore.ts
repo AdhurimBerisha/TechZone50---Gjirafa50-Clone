@@ -72,8 +72,14 @@ interface AdminActions {
     token: string,
     amount: number,
   ) => Promise<
-    | { ok: true; code: string; amount: number }
-    | { ok: false; error: string }
+    { ok: true; code: string; amount: number } | { ok: false; error: string }
+  >;
+  createAdminSettings: (
+    // 👈 add this
+    token: string,
+    settings: Partial<AdminSettings>,
+  ) => Promise<
+    { ok: true; settings: AdminSettings } | { ok: false; error: string }
   >;
 }
 
@@ -112,6 +118,12 @@ interface TopProduct {
   category: string;
   unitsSold: number;
   revenue: number;
+}
+
+interface AdminSettings {
+  id: string;
+  key: string;
+  value: string;
 }
 
 const initialState: AdminState = {
@@ -451,6 +463,44 @@ export const useAdminStore = create<AdminStore>()(
           const axiosError = error as AxiosError<{ error?: string }>;
           const msg =
             axiosError.response?.data?.error ?? "Failed to create gift card";
+          set({
+            error: msg,
+            isLoading: false,
+          });
+          return { ok: false as const, error: msg };
+        }
+      },
+      createAdminSettings: async (token, settings) => {
+        try {
+          set({ isLoading: true, error: null });
+          const res = await api.post<{
+            success: true;
+            settings: AdminSettings;
+          }>(`/api/admin/settings`, settings, adminAuth(token));
+          const data = res.data;
+          if (
+            "success" in data &&
+            data.success === true &&
+            "settings" in data
+          ) {
+            set({ isLoading: false, error: null });
+            return {
+              ok: true as const,
+              settings: data.settings,
+            };
+          }
+          const msg =
+            "error" in data && typeof data.error === "string"
+              ? data.error
+              : "Failed to create admin settings";
+          set({ isLoading: false, error: msg });
+          return { ok: false as const, error: msg };
+        } catch (error) {
+          console.error("Error creating admin settings:", error);
+          const axiosError = error as AxiosError<{ error?: string }>;
+          const msg =
+            axiosError.response?.data?.error ??
+            "Failed to create admin settings";
           set({
             error: msg,
             isLoading: false,
