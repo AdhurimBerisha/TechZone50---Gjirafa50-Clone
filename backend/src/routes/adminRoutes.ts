@@ -15,6 +15,7 @@ import {
   getAllGiftCards,
   createGiftCard,
   createAdminSettings,
+  updateAdminSettings,
 } from "../controllers/adminController";
 import { upload } from "../middleware/upload";
 import { requireClerkAuth } from "../middleware/authMiddleware";
@@ -39,5 +40,6 @@ router.put("/orders/:id/status", updateOrderStatus);
 router.get("/gift-cards", getAllGiftCards);
 router.post("/gift-cards", createGiftCard);
 router.post("/settings", createAdminSettings);
+router.put("/settings", updateAdminSettings);
 
 export default router;
