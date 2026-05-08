@@ -817,6 +817,79 @@ const createAdminSettings = async (req: Request, res: Response) => {
   }
 };
 
+const updateAdminSettings = async (req: Request, res: Response) => {
+  try {
+    const existing = await prisma.storeSettings.findUnique({
+      where: { id: "default" },
+    });
+
+    if (!existing) {
+      return res
+        .status(404)
+        .json({ error: "Store settings not found. Use create instead." });
+    }
+
+    const {
+      storeName,
+      storeEmail,
+      storePhone,
+      storeDescription,
+      street,
+      city,
+      state,
+      zipCode,
+      shippingPrice,
+      freeShippingThreshold,
+      deliveryTime,
+      metaTitle,
+      metaDescription,
+      facebook,
+      instagram,
+      tiktok,
+    } = req.body;
+
+    const updateData: Record<string, unknown> = {};
+
+    if (storeName !== undefined) updateData.storeName = storeName;
+    if (storeEmail !== undefined) updateData.storeEmail = storeEmail;
+    if (storePhone !== undefined) updateData.storePhone = storePhone;
+    if (storeDescription !== undefined)
+      updateData.storeDescription = storeDescription;
+    if (street !== undefined) updateData.street = street;
+    if (city !== undefined) updateData.city = city;
+    if (state !== undefined) updateData.state = state;
+    if (zipCode !== undefined) updateData.zipCode = zipCode;
+    if (shippingPrice !== undefined)
+      updateData.shippingPrice = parseFloat(shippingPrice);
+    if (freeShippingThreshold !== undefined)
+      updateData.freeShippingThreshold =
+        freeShippingThreshold === null
+          ? null
+          : parseFloat(freeShippingThreshold);
+    if (deliveryTime !== undefined) updateData.deliveryTime = deliveryTime;
+    if (metaTitle !== undefined) updateData.metaTitle = metaTitle;
+    if (metaDescription !== undefined)
+      updateData.metaDescription = metaDescription;
+    if (facebook !== undefined) updateData.facebook = facebook;
+    if (instagram !== undefined) updateData.instagram = instagram;
+    if (tiktok !== undefined) updateData.tiktok = tiktok;
+
+    if (Object.keys(updateData).length === 0) {
+      return res.status(400).json({ error: "No fields provided to update" });
+    }
+
+    const settings = await prisma.storeSettings.update({
+      where: { id: "default" },
+      data: updateData,
+    });
+
+    return res.status(200).json({ success: true, settings });
+  } catch (error) {
+    console.error("Error updating admin settings", error);
+    return res.status(500).json({ error: "Failed to update admin settings" });
+  }
+};
+
 export {
   getAdminDashboard,
   getAllUsers,
@@ -833,4 +906,5 @@ export {
   getAllGiftCards,
   createGiftCard,
   createAdminSettings,
+  updateAdminSettings,
 };
