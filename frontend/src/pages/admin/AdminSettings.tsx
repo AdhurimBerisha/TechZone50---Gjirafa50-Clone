@@ -102,7 +102,8 @@ const defaultForm: SettingsForm = {
 
 const AdminSettings = () => {
   const { getToken } = useAuth();
-  const { createAdminSettings, updateAdminSettings } = useAdminStore();
+  const { createAdminSettings, updateAdminSettings, fetchAdminSettings } =
+    useAdminStore();
 
   const [form, setForm] = useState<SettingsForm>(defaultForm);
   const [isExisting, setIsExisting] = useState(false);
@@ -120,41 +121,35 @@ const AdminSettings = () => {
         const token = await getToken();
         if (!token) return;
 
-        const res = await fetch("/api/admin/settings", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const { fetchAdminSettings } = useAdminStore.getState();
+        const data = await fetchAdminSettings(token);
 
-        if (res.ok) {
-          const data = await res.json();
-
-          // Server returns {} when no settings exist yet
-          if (data?.id) {
-            setIsExisting(true);
-            setForm({
-              storeName: data.storeName ?? "",
-              storeEmail: data.storeEmail ?? "",
-              storePhone: data.storePhone ?? "",
-              storeDescription: data.storeDescription ?? "",
-              street: data.street ?? "",
-              city: data.city ?? "",
-              state: data.state ?? "",
-              zipCode: data.zipCode ?? "",
-              shippingPrice:
-                data.shippingPrice !== undefined
-                  ? String(data.shippingPrice)
-                  : "0",
-              freeShippingThreshold:
-                data.freeShippingThreshold != null
-                  ? String(data.freeShippingThreshold)
-                  : "",
-              deliveryTime: data.deliveryTime ?? "1-3 ditë pune",
-              metaTitle: data.metaTitle ?? "",
-              metaDescription: data.metaDescription ?? "",
-              facebook: data.facebook ?? "",
-              instagram: data.instagram ?? "",
-              tiktok: data.tiktok ?? "",
-            });
-          }
+        if (data?.id) {
+          setIsExisting(true);
+          setForm({
+            storeName: data.storeName ?? "",
+            storeEmail: data.storeEmail ?? "",
+            storePhone: data.storePhone ?? "",
+            storeDescription: data.storeDescription ?? "",
+            street: data.street ?? "",
+            city: data.city ?? "",
+            state: data.state ?? "",
+            zipCode: data.zipCode ?? "",
+            shippingPrice:
+              data.shippingPrice !== undefined
+                ? String(data.shippingPrice)
+                : "0",
+            freeShippingThreshold:
+              data.freeShippingThreshold != null
+                ? String(data.freeShippingThreshold)
+                : "",
+            deliveryTime: data.deliveryTime ?? "1-3 ditë pune",
+            metaTitle: data.metaTitle ?? "",
+            metaDescription: data.metaDescription ?? "",
+            facebook: data.facebook ?? "",
+            instagram: data.instagram ?? "",
+            tiktok: data.tiktok ?? "",
+          });
         }
       } catch (err) {
         console.error("Could not load settings:", err);
