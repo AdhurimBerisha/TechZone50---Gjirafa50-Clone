@@ -39,6 +39,7 @@ router.get("/revenue", getTotalRevenue);
 router.put("/orders/:id/status", updateOrderStatus);
 router.get("/gift-cards", getAllGiftCards);
 router.post("/gift-cards", createGiftCard);
+router.get("/settings", getAdminSettings);
 router.post("/settings", createAdminSettings);
 router.put("/settings", updateAdminSettings);
 

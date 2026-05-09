@@ -86,6 +86,7 @@ interface AdminActions {
   ) => Promise<
     { ok: true; settings: AdminSettings } | { ok: false; error: string }
   >;
+  fetchAdminSettings: (token: string) => Promise<AdminSettings | null>;
 }
 
 type AdminStore = AdminState & AdminActions;
@@ -127,8 +128,22 @@ interface TopProduct {
 
 interface AdminSettings {
   id: string;
-  key: string;
-  value: string;
+  storeName?: string;
+  storeEmail?: string;
+  storePhone?: string | null;
+  storeDescription?: string | null;
+  street?: string | null;
+  city?: string | null;
+  state?: string | null;
+  zipCode?: string | null;
+  shippingPrice?: number;
+  freeShippingThreshold?: number | null;
+  deliveryTime?: string | null;
+  metaTitle?: string | null;
+  metaDescription?: string | null;
+  facebook?: string | null;
+  instagram?: string | null;
+  tiktok?: string | null;
 }
 
 const initialState: AdminState = {
@@ -551,6 +566,17 @@ export const useAdminStore = create<AdminStore>()(
             isLoading: false,
           });
           return { ok: false as const, error: msg };
+        }
+      },
+      fetchAdminSettings: async (token) => {
+        try {
+          const res = await api.get<AdminSettings>(
+            "/api/admin/settings",
+            adminAuth(token),
+          );
+          return res.data?.id ? res.data : null;
+        } catch {
+          return null;
         }
       },
     }),

@@ -182,7 +182,17 @@ const updateOrderStatus = async (req: Request, res: Response) => {
   }
 };
 
-const getAdminSettings = async (req: Request, res: Response) => {};
+const getAdminSettings = async (req: Request, res: Response) => {
+  try {
+    const settings = await prisma.storeSettings.findUnique({
+      where: { id: "default" },
+    });
+    return res.status(200).json(settings ?? {});
+  } catch (error) {
+    console.error("Error fetching settings:", error);
+    return res.status(500).json({ error: "Failed to fetch settings" });
+  }
+};
 
 const createProduct = async (req: Request, res: Response) => {
   const {
