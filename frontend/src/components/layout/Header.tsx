@@ -18,12 +18,23 @@ const Header = () => {
   const currentUser = useAuthStore((s) => s.currentUser);
   const isAdmin = currentUser?.role === "ADMIN";
   const wrapperRef = useRef<HTMLDivElement>(null);
+  const [storeName, setStoreName] = useState<string | null>(null);
 
   const { searchResults, isSearching, fetchSearchResults, clearSearchResults } =
     useProductStore();
 
   const showDropdown =
     localSearch.trim().length > 0 && (isSearching || searchResults.length > 0);
+
+  // Fetch public store settings once on mount
+  useEffect(() => {
+    fetch("/api/public/settings")
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.storeName) setStoreName(data.storeName);
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (!localSearch.trim()) {
@@ -79,9 +90,13 @@ const Header = () => {
       <div className="max-w-[1320px] mx-auto flex items-center gap-6">
         {/* Logo */}
         <Link to="/" className="flex-shrink-0">
-          <span className="text-2xl font-bold text-white">
-            Tech<span className="text-orange-600">Zone</span>
-            <span className="text-orange-600 text-2xl font-normal">50</span>
+          <span className="text-2xl font-bold bg-gradient-to-r from-white to-orange-600 bg-clip-text text-transparent">
+            {storeName ?? (
+              <>
+                Tech<span className="text-orange-600">Zone</span>
+                <span className="text-2xl font-normal">50</span>
+              </>
+            )}
           </span>
         </Link>
 
