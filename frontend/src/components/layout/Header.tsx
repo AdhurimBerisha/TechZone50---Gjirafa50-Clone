@@ -89,7 +89,7 @@ const Header = () => {
           <span className="text-2xl font-bold bg-gradient-to-r from-white to-orange-600 bg-clip-text text-transparent">
             {settings?.storeName || (
               <>
-                Tech<span className="text-orange-600">Zone</span>
+                Tech<span>Zone</span>
                 <span className="text-2xl font-normal">50</span>
               </>
             )}
