@@ -19,6 +19,7 @@ Built with a scalable architecture, this project demonstrates real-world e-comme
   - Users
   - Gift Cards
   - Reviews
+  - Store Settings
 - Image uploads and storage with cloud integration  
 - Responsive design for all devices  
 
