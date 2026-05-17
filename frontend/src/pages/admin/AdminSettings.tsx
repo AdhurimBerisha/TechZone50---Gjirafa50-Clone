@@ -30,7 +30,7 @@ const Section = ({
   title: string;
   children: React.ReactNode;
 }) => (
-  <div className="bg-white rounded-lg border border-border p-6 shadow-sm">
+  <div className="bg-white rounded-lg border border-border p-4 sm:p-6 shadow-sm">
     <h2 className="font-semibold mb-4 flex items-center gap-2 text-foreground">
       <Icon className="h-4 w-4 text-muted-foreground" />
       {title}
@@ -220,11 +220,11 @@ const AdminSettings = () => {
 
   if (isFetching) {
     return (
-      <div className="max-w-2xl space-y-6">
+      <div className="max-w-2xl w-full space-y-4 sm:space-y-6">
         {[...Array(4)].map((_, i) => (
           <div
             key={i}
-            className="bg-white rounded-lg border border-border p-6 animate-pulse"
+            className="bg-white rounded-lg border border-border p-4 sm:p-6 animate-pulse"
           >
             <div className="h-4 w-32 bg-muted rounded mb-4" />
             <div className="space-y-3">
@@ -240,7 +240,7 @@ const AdminSettings = () => {
   // ── Render ────────────────────────────────────────────────────────────────────
 
   return (
-    <div className="max-w-2xl space-y-6">
+    <div className="max-w-2xl w-full space-y-4 sm:space-y-6">
       {/* ── Store Info ─────────────────────────────────────────────────────────── */}
       <Section icon={Store} title="Informatat e dyqanit">
         <div>
@@ -254,7 +254,7 @@ const AdminSettings = () => {
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className={labelClass}>Email kontakti</label>
             <input
@@ -299,7 +299,7 @@ const AdminSettings = () => {
           />
         </div>
 
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           <div>
             <label className={labelClass}>Qyteti</label>
             <input
@@ -335,7 +335,7 @@ const AdminSettings = () => {
 
       {/* ── Shipping ───────────────────────────────────────────────────────────── */}
       <Section icon={Truck} title="Transporti">
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className={labelClass}>Çmimi i transportit (€)</label>
             <input
@@ -438,7 +438,7 @@ const AdminSettings = () => {
       <button
         onClick={handleSave}
         disabled={isSaving}
-        className="flex items-center gap-2 bg-primary text-primary-foreground px-6 py-2.5 rounded-lg text-sm font-medium hover:bg-primary/90 disabled:opacity-60 disabled:cursor-not-allowed transition-opacity"
+        className="flex items-center justify-center gap-2 bg-primary text-primary-foreground px-6 py-2.5 rounded-lg text-sm font-medium hover:bg-primary/90 disabled:opacity-60 disabled:cursor-not-allowed transition-opacity w-full sm:w-auto"
       >
         {isSaving ? (
           <Loader2 className="h-4 w-4 animate-spin" />
