@@ -163,7 +163,7 @@ const AdminGiftCards = () => {
   return (
     <div className="space-y-4">
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
         <div className="bg-white rounded-lg border border-border p-4">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-orange-100 rounded-lg">
@@ -220,7 +220,7 @@ const AdminGiftCards = () => {
         </div>
         <button
           onClick={() => setShowCreateModal(true)}
-          className="flex items-center gap-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
+          className="flex items-center justify-center gap-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors w-full sm:w-auto shrink-0"
         >
           <Plus className="h-4 w-4" />
           Krijo Gift Card
@@ -228,26 +228,26 @@ const AdminGiftCards = () => {
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-lg border border-border overflow-x-auto">
-        <table className="w-full">
+      <div className="bg-white rounded-lg border border-border overflow-x-auto -mx-px">
+        <table className="w-full min-w-[680px]">
           <thead>
             <tr className="border-b border-border bg-muted/50">
-              <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase">
+              <th className="text-left px-3 sm:px-4 py-2.5 sm:py-3 text-xs font-medium text-muted-foreground uppercase">
                 Kodi
               </th>
-              <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase">
+              <th className="text-left px-3 sm:px-4 py-2.5 sm:py-3 text-xs font-medium text-muted-foreground uppercase">
                 Balanca
               </th>
-              <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase">
+              <th className="text-left px-3 sm:px-4 py-2.5 sm:py-3 text-xs font-medium text-muted-foreground uppercase">
                 Statusi
               </th>
-              <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase">
+              <th className="text-left px-3 sm:px-4 py-2.5 sm:py-3 text-xs font-medium text-muted-foreground uppercase">
                 Marrimtari
               </th>
-              <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase">
+              <th className="text-left px-3 sm:px-4 py-2.5 sm:py-3 text-xs font-medium text-muted-foreground uppercase">
                 Blersit
               </th>
-              <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground uppercase">
+              <th className="text-left px-3 sm:px-4 py-2.5 sm:py-3 text-xs font-medium text-muted-foreground uppercase">
                 Data
               </th>
             </tr>
@@ -268,7 +268,7 @@ const AdminGiftCards = () => {
                   key={card.id}
                   className="border-b border-border last:border-b-0 hover:bg-muted/30"
                 >
-                  <td className="px-4 py-3">
+                  <td className="px-3 sm:px-4 py-2.5 sm:py-3">
                     <div className="flex items-center gap-2">
                       <code className="text-sm font-mono bg-muted px-2 py-1 rounded">
                         {card.displayCode}
@@ -288,11 +288,11 @@ const AdminGiftCards = () => {
                       </button>
                     </div>
                   </td>
-                  <td className="px-4 py-3 text-sm font-medium">
+                  <td className="px-3 sm:px-4 py-2.5 sm:py-3 text-sm font-medium">
                     {card.currentBalance.toFixed(2)}€ /{" "}
                     {card.initialAmount.toFixed(2)}€
                   </td>
-                  <td className="px-4 py-3">
+                  <td className="px-3 sm:px-4 py-2.5 sm:py-3">
                     <span
                       className={`text-xs px-2 py-1 rounded-full font-medium ${
                         statusColors[card.status] ?? "bg-gray-100 text-gray-700"
@@ -301,13 +301,13 @@ const AdminGiftCards = () => {
                       {statusLabels[card.status]}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-sm">
+                  <td className="px-3 sm:px-4 py-2.5 sm:py-3 text-sm">
                     {card.recipientName || card.recipientEmail || "-"}
                   </td>
-                  <td className="px-4 py-3 text-sm text-muted-foreground">
+                  <td className="px-3 sm:px-4 py-2.5 sm:py-3 text-sm text-muted-foreground">
                     {card.purchaserEmail || "-"}
                   </td>
-                  <td className="px-4 py-3 text-sm text-muted-foreground">
+                  <td className="px-3 sm:px-4 py-2.5 sm:py-3 text-sm text-muted-foreground">
                     {new Date(card.createdAt).toLocaleDateString("sq-AL")}
                   </td>
                 </tr>
@@ -319,9 +319,9 @@ const AdminGiftCards = () => {
 
       {/* Create Modal */}
       {showCreateModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
-            <div className="flex items-center justify-between p-4 border-b">
+        <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50 p-3 sm:p-4">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-md max-h-[min(90vh,640px)] flex flex-col">
+            <div className="flex items-center justify-between p-4 border-b shrink-0">
               <h2 className="text-lg font-semibold">Krijo Gift Card të Ri</h2>
               <button
                 onClick={() => setShowCreateModal(false)}
@@ -330,7 +330,10 @@ const AdminGiftCards = () => {
                 <X className="h-5 w-5" />
               </button>
             </div>
-            <form onSubmit={handleCreateGiftCard} className="p-4 space-y-4">
+            <form
+              onSubmit={handleCreateGiftCard}
+              className="p-4 space-y-4 overflow-y-auto flex-1"
+            >
               <div>
                 <label className="block text-sm font-medium mb-1">
                   Shuma (€)

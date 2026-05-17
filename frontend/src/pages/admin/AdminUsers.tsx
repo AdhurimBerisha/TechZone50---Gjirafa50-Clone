@@ -37,20 +37,20 @@ const AdminUsers = () => {
           {error}
         </p>
       ) : null}
-      <div className="bg-white rounded-lg border border-border overflow-x-auto">
-        <table className="w-full">
+      <div className="bg-white rounded-lg border border-border overflow-x-auto -mx-px">
+        <table className="w-full min-w-[560px]">
           <thead>
             <tr className="border-b border-border bg-muted/50">
-              <th className="text-left px-5 py-3 text-xs font-medium text-muted-foreground uppercase">
+              <th className="text-left px-3 sm:px-5 py-2.5 sm:py-3 text-xs font-medium text-muted-foreground uppercase">
                 Përdoruesi
               </th>
-              <th className="text-left px-5 py-3 text-xs font-medium text-muted-foreground uppercase">
+              <th className="text-left px-3 sm:px-5 py-2.5 sm:py-3 text-xs font-medium text-muted-foreground uppercase">
                 Email
               </th>
-              <th className="text-left px-5 py-3 text-xs font-medium text-muted-foreground uppercase">
+              <th className="text-left px-3 sm:px-5 py-2.5 sm:py-3 text-xs font-medium text-muted-foreground uppercase">
                 Porosi
               </th>
-              <th className="text-left px-5 py-3 text-xs font-medium text-muted-foreground uppercase">
+              <th className="text-left px-3 sm:px-5 py-2.5 sm:py-3 text-xs font-medium text-muted-foreground uppercase">
                 I regjistruar
               </th>
             </tr>
@@ -80,7 +80,7 @@ const AdminUsers = () => {
                   key={user.id}
                   className="border-b border-border last:border-b-0 hover:bg-muted/30"
                 >
-                  <td className="px-5 py-3">
+                  <td className="px-3 sm:px-5 py-2.5 sm:py-3">
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
                         <UsersIcon className="h-4 w-4 text-primary" />
@@ -90,16 +90,16 @@ const AdminUsers = () => {
                       </span>
                     </div>
                   </td>
-                  <td className="px-5 py-3 text-sm text-muted-foreground">
+                  <td className="px-3 sm:px-5 py-2.5 sm:py-3 text-sm text-muted-foreground">
                     {user.email}
                   </td>
                   <td
-                    className="px-5 py-3 text-sm text-muted-foreground"
+                    className="px-3 sm:px-5 py-2.5 sm:py-3 text-sm text-muted-foreground"
                     title="Numri i porosive nuk ofrohet nga API ende"
                   >
                     —
                   </td>
-                  <td className="px-5 py-3 text-sm text-muted-foreground">
+                  <td className="px-3 sm:px-5 py-2.5 sm:py-3 text-sm text-muted-foreground">
                     {formatJoined(user.createdAt)}
                   </td>
                 </tr>

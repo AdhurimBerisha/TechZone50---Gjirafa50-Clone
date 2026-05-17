@@ -1,6 +1,6 @@
+import { Fragment, useEffect, useState } from "react";
 import { useAuth } from "@clerk/react";
 import { useAdminStore } from "@/stores/adminStore";
-import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 
 const statusColors: Record<string, string> = {
@@ -73,29 +73,29 @@ const AdminOrders = () => {
         </p>
       ) : null}
 
-      <div className="bg-white rounded-lg border border-border overflow-x-auto">
-        <table className="w-full">
+      <div className="bg-white rounded-lg border border-border overflow-x-auto -mx-px">
+        <table className="w-full min-w-[760px]">
           <thead>
             <tr className="border-b border-border bg-muted/50">
-              <th className="text-left px-5 py-3 text-xs font-medium text-muted-foreground uppercase">
+              <th className="text-left px-3 sm:px-5 py-2.5 sm:py-3 text-xs font-medium text-muted-foreground uppercase">
                 ID
               </th>
-              <th className="text-left px-5 py-3 text-xs font-medium text-muted-foreground uppercase">
+              <th className="text-left px-3 sm:px-5 py-2.5 sm:py-3 text-xs font-medium text-muted-foreground uppercase">
                 Klienti
               </th>
-              <th className="text-left px-5 py-3 text-xs font-medium text-muted-foreground uppercase">
+              <th className="text-left px-3 sm:px-5 py-2.5 sm:py-3 text-xs font-medium text-muted-foreground uppercase">
                 Email
               </th>
-              <th className="text-left px-5 py-3 text-xs font-medium text-muted-foreground uppercase">
+              <th className="text-left px-3 sm:px-5 py-2.5 sm:py-3 text-xs font-medium text-muted-foreground uppercase">
                 Artikuj
               </th>
-              <th className="text-left px-5 py-3 text-xs font-medium text-muted-foreground uppercase">
+              <th className="text-left px-3 sm:px-5 py-2.5 sm:py-3 text-xs font-medium text-muted-foreground uppercase">
                 Totali
               </th>
-              <th className="text-left px-5 py-3 text-xs font-medium text-muted-foreground uppercase">
+              <th className="text-left px-3 sm:px-5 py-2.5 sm:py-3 text-xs font-medium text-muted-foreground uppercase">
                 Statusi
               </th>
-              <th className="text-left px-5 py-3 text-xs font-medium text-muted-foreground uppercase">
+              <th className="text-left px-3 sm:px-5 py-2.5 sm:py-3 text-xs font-medium text-muted-foreground uppercase">
                 Data
               </th>
             </tr>
@@ -112,27 +112,26 @@ const AdminOrders = () => {
               </tr>
             ) : (
               recentOrders.map((order) => (
-                <>
+                <Fragment key={order.id}>
                   <tr
-                    key={order.id}
                     className="border-b border-border last:border-b-0 hover:bg-muted/30"
                   >
-                    <td className="px-5 py-3 text-sm font-mono font-medium text-muted-foreground">
+                    <td className="px-3 sm:px-5 py-2.5 sm:py-3 text-sm font-mono font-medium text-muted-foreground">
                       {order.id.slice(0, 8)}…
                     </td>
-                    <td className="px-5 py-3 text-sm">
+                    <td className="px-3 sm:px-5 py-2.5 sm:py-3 text-sm">
                       {order.user?.name || "Pa emër"}
                     </td>
-                    <td className="px-5 py-3 text-sm text-muted-foreground">
+                    <td className="px-3 sm:px-5 py-2.5 sm:py-3 text-sm text-muted-foreground">
                       {order.user?.email || "-"}
                     </td>
-                    <td className="px-5 py-3 text-sm">
+                    <td className="px-3 sm:px-5 py-2.5 sm:py-3 text-sm">
                       {order.items?.length ?? 0}
                     </td>
-                    <td className="px-5 py-3 text-sm font-medium">
+                    <td className="px-3 sm:px-5 py-2.5 sm:py-3 text-sm font-medium">
                       {order.total.toFixed(2)}€
                     </td>
-                    <td className="px-5 py-3">
+                    <td className="px-3 sm:px-5 py-2.5 sm:py-3">
                       <div className="flex items-center gap-2">
                         <select
                           value={order.status}
@@ -156,12 +155,12 @@ const AdminOrders = () => {
                         )}
                       </div>
                     </td>
-                    <td className="px-5 py-3 text-sm text-muted-foreground">
+                    <td className="px-3 sm:px-5 py-2.5 sm:py-3 text-sm text-muted-foreground">
                       {new Date(order.createdAt).toLocaleDateString("sq-AL")}
                     </td>
                   </tr>
                   {updateError?.id === order.id && (
-                    <tr key={`${order.id}-error`}>
+                    <tr>
                       <td
                         colSpan={7}
                         className="px-5 pb-2 text-xs text-destructive"
@@ -170,7 +169,7 @@ const AdminOrders = () => {
                       </td>
                     </tr>
                   )}
-                </>
+                </Fragment>
               ))
             )}
           </tbody>

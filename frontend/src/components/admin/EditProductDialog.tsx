@@ -214,7 +214,7 @@ export function EditProductDialog({
       }}
     >
       <DialogContent
-        className="sm:max-w-lg max-h-[min(90vh,calc(100%-2rem))] overflow-y-auto"
+        className="w-[calc(100%-1.5rem)] sm:max-w-lg max-h-[min(90vh,calc(100%-2rem))] overflow-y-auto"
         showCloseButton={!submitting}
       >
         <form onSubmit={handleSubmit}>
