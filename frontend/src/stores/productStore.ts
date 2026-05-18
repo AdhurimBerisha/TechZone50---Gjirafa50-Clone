@@ -2,6 +2,11 @@ import { create } from "zustand";
 import { AxiosError } from "axios";
 import { api } from "@/lib/api";
 import type { Product as UiProduct } from "@/data/products";
+import {
+  categoryFieldsFromApi,
+  type ApiCategory,
+  type ApiSubcategoryRef,
+} from "@/lib/productCategory";
 
 export type BackendProduct = {
   id: string;
@@ -27,28 +32,51 @@ export type BackendProduct = {
   updatedAt: string;
 };
 
-export function toUiProduct(p: BackendProduct): UiProduct {
+/** Raw product row from admin/public APIs (category may be nested). */
+export type BackendProductInput = Omit<
+  BackendProduct,
+  "category" | "categorySlug" | "subcategorySlugs"
+> & {
+  category?: ApiCategory | string;
+  categorySlug?: string;
+  subcategory?: ApiSubcategoryRef;
+  subcategorySlugs?: string[] | null;
+  brand?: string | null;
+};
+
+export function normalizeBackendProduct(p: BackendProductInput): BackendProduct {
+  const { category, categorySlug, subcategorySlugs } = categoryFieldsFromApi(p);
   return {
-    id: p.id,
-    name: p.name,
-    slug: p.slug,
-    price: p.price,
-    oldPrice: p.oldPrice ?? undefined,
-    image: p.image ?? p.images?.[0] ?? "",
-    category: p.category,
-    categorySlug: p.categorySlug,
-    subcategorySlugs: p.subcategorySlugs ?? undefined,
-    brand: "—",
-    rating: p.rating ?? 0,
+    ...p,
+    category,
+    categorySlug,
+    subcategorySlugs: subcategorySlugs ?? null,
+  };
+}
+
+export function toUiProduct(p: BackendProductInput): UiProduct {
+  const normalized = normalizeBackendProduct(p);
+  return {
+    id: normalized.id,
+    name: normalized.name,
+    slug: normalized.slug,
+    price: normalized.price,
+    oldPrice: normalized.oldPrice ?? undefined,
+    image: normalized.image ?? normalized.images?.[0] ?? "",
+    category: normalized.category,
+    categorySlug: normalized.categorySlug,
+    subcategorySlugs: normalized.subcategorySlugs ?? undefined,
+    brand: p.brand?.trim() || "—",
+    rating: normalized.rating ?? 0,
     reviewCount: 0,
     badges: [],
     specs: {},
-    description: p.description ?? "",
-    inStock: p.stock > 0,
-    isOutlet: p.isOutlet,
-    outletDiscount: p.outletDiscount ?? undefined,
-    outletStock: p.outletStock ?? undefined,
-    condition: p.condition,
+    description: normalized.description ?? "",
+    inStock: normalized.stock > 0,
+    isOutlet: normalized.isOutlet,
+    outletDiscount: normalized.outletDiscount ?? undefined,
+    outletStock: normalized.outletStock ?? undefined,
+    condition: normalized.condition,
   };
 }
 

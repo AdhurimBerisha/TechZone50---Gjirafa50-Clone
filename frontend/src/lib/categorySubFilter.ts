@@ -12,7 +12,10 @@ export function resolveSubcategoryLabel(
       if (hit) return hit.name;
     }
   }
-  const sub = category.subcategories.find((s) => s.slug === subSlug);
+  const subs = Array.isArray(category.subcategories)
+    ? category.subcategories
+    : [];
+  const sub = subs.find((s) => s.slug === subSlug);
   return sub?.name ?? null;
 }
 

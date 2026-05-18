@@ -3,6 +3,7 @@ import { AxiosError } from "axios";
 import { api } from "@/lib/api";
 import type { Category, MegaMenu } from "@/data/products";
 import { staticCategories } from "@/data/products";
+import { normalizeSubcategoryList } from "@/lib/categoryShape";
 
 type ApiCategory = {
   id: string;
@@ -10,7 +11,7 @@ type ApiCategory = {
   name: string;
   icon: string;
   sortOrder: number;
-  subcategories: Category["subcategories"];
+  subcategories?: unknown;
   megaMenu?: MegaMenu | null;
 };
 
@@ -20,7 +21,7 @@ function toCategory(row: ApiCategory): Category {
     slug: row.slug,
     name: row.name,
     icon: row.icon,
-    subcategories: row.subcategories,
+    subcategories: normalizeSubcategoryList(row.subcategories),
     megaMenu: row.megaMenu ?? undefined,
   };
 }

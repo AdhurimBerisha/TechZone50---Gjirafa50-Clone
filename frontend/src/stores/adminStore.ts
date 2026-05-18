@@ -2,9 +2,36 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { AxiosError } from "axios";
 import { api } from "@/lib/api";
-import type { BackendProduct } from "@/stores/productStore";
+import {
+  normalizeBackendProduct,
+  type BackendProduct,
+  type BackendProductInput,
+} from "@/stores/productStore";
+import { categoryDisplayName, type ApiCategory } from "@/lib/productCategory";
+import {
+  buildCreateProductFormData,
+  compactUpdatePayload,
+  extractAdminApiError,
+  type CreateProductPayload,
+  type ProductSpecificationInput,
+  type ProductVariantInput,
+  type ProductVariantOptionInput,
+  type UpdateProductPayload,
+} from "@/lib/adminProductPayload";
+
+export type {
+  CreateProductPayload,
+  UpdateProductPayload,
+  ProductSpecificationInput,
+  ProductVariantInput,
+  ProductVariantOptionInput,
+};
 
 const adminAuth = (token: string) => ({
+  headers: { Authorization: `Bearer ${token}` },
+});
+
+const adminAuthMultipart = (token: string) => ({
   headers: { Authorization: `Bearer ${token}` },
 });
 
@@ -22,31 +49,6 @@ interface AdminState {
   topProducts: TopProduct[];
 }
 
-export type CreateProductPayload = {
-  name: string;
-  slug: string;
-  description?: string;
-  category: string;
-  categorySlug: string;
-  price: number;
-  oldPrice?: number | null;
-  rating?: number;
-  image?: string;
-  images?: string[];
-  stock?: number;
-  isFeatured?: boolean;
-  isActive?: boolean;
-  /** Slugs matching mega menu / `?sub=` for the chosen category */
-  subcategorySlugs?: string[];
-  isOutlet?: boolean;
-  outletDiscount?: number;
-  outletStock?: number;
-  condition?: "NEW" | "OPEN_BOX" | "REFURBISHED";
-};
-
-/** Body for `PUT /api/admin/products/:id` — same fields as create; all sent on save. */
-export type UpdateProductPayload = CreateProductPayload;
-
 interface AdminActions {
   fetchAllProducts: (token: string) => Promise<void>;
   fetchAllUsers: (token: string) => Promise<void>;
@@ -61,7 +63,8 @@ interface AdminActions {
   ) => Promise<{ ok: true } | { ok: false; error: string }>;
   createProduct: (
     token: string,
-    payload: CreateProductPayload | FormData,
+    payload: CreateProductPayload,
+    imageFile?: File | null,
   ) => Promise<{ ok: true } | { ok: false; error: string }>;
   updateProduct: (
     token: string,
@@ -169,12 +172,13 @@ export const useAdminStore = create<AdminStore>()(
           set({ isLoading: true, error: null });
           const res = await api.get<{
             success: true;
-            products: BackendProduct[];
+            products: BackendProductInput[];
           }>("/api/admin/products", adminAuth(token));
           if ("success" in res.data && res.data.success === true) {
+            const products = res.data.products.map(normalizeBackendProduct);
             set({
-              totalProducts: res.data.products.length,
-              recentProducts: res.data.products,
+              totalProducts: products.length,
+              recentProducts: products,
               isLoading: false,
             });
           } else {
@@ -219,7 +223,7 @@ export const useAdminStore = create<AdminStore>()(
         try {
           set({ isLoading: true, error: null });
           const [productsRes, usersRes] = await Promise.all([
-            api.get<{ success: true; products: BackendProduct[] }>(
+            api.get<{ success: true; products: BackendProductInput[] }>(
               "/api/admin/products",
               adminAuth(token),
             ),
@@ -239,9 +243,12 @@ export const useAdminStore = create<AdminStore>()(
             });
             return;
           }
+          const products = productsRes.data.products.map(
+            normalizeBackendProduct,
+          );
           set({
-            totalProducts: productsRes.data.products.length,
-            recentProducts: productsRes.data.products,
+            totalProducts: products.length,
+            recentProducts: products,
             totalUsers: usersRes.data.users.length,
             recentUsers: usersRes.data.users,
             isLoading: false,
@@ -262,7 +269,13 @@ export const useAdminStore = create<AdminStore>()(
         try {
           set({ isLoading: true, error: null });
           const res = await api.get<
-            { success: true; topProducts: TopProduct[] } | { error: string }
+            | {
+                success: true;
+                topProducts: Array<
+                  Omit<TopProduct, "category"> & { category: ApiCategory }
+                >;
+              }
+            | { error: string }
           >("/api/admin/top-products", adminAuth(token));
           const data = res.data;
           if (
@@ -271,7 +284,10 @@ export const useAdminStore = create<AdminStore>()(
             "topProducts" in data
           ) {
             set({
-              topProducts: data.topProducts,
+              topProducts: data.topProducts.map((p) => ({
+                ...p,
+                category: categoryDisplayName(p.category),
+              })),
               isLoading: false,
               error: null,
             });
@@ -289,14 +305,15 @@ export const useAdminStore = create<AdminStore>()(
           });
         }
       },
-      createProduct: async (token, payload) => {
+      createProduct: async (token, payload, imageFile) => {
         try {
+          const body = buildCreateProductFormData(payload, imageFile);
           const res = await api.post<
-            { success: true; product: BackendProduct } | { error: string }
-          >("/api/admin/products", payload, adminAuth(token));
+            { success: true; product: BackendProductInput } | { error: string }
+          >("/api/admin/products", body, adminAuthMultipart(token));
           const data = res.data;
           if ("success" in data && data.success === true && "product" in data) {
-            const created = data.product;
+            const created = normalizeBackendProduct(data.product);
             set((s) => ({
               recentProducts: [created, ...s.recentProducts],
               totalProducts: s.totalProducts + 1,
@@ -310,26 +327,24 @@ export const useAdminStore = create<AdminStore>()(
           return { ok: false as const, error: msg };
         } catch (error) {
           console.error("Error creating product:", error);
-          const axiosError = error as AxiosError<{ error?: string }>;
           return {
             ok: false as const,
-            error:
-              axiosError.response?.data?.error ?? "Failed to create product",
+            error: extractAdminApiError(error, "Failed to create product"),
           };
         }
       },
       updateProduct: async (token, id, payload) => {
         try {
           const res = await api.put<
-            { success: true; product: BackendProduct } | { error: string }
+            { success: true; product: BackendProductInput } | { error: string }
           >(
             `/api/admin/products/${encodeURIComponent(id)}`,
-            payload,
+            compactUpdatePayload(payload),
             adminAuth(token),
           );
           const data = res.data;
           if ("success" in data && data.success === true && "product" in data) {
-            const updated = data.product;
+            const updated = normalizeBackendProduct(data.product);
             set((s) => ({
               recentProducts: s.recentProducts.map((p) =>
                 p.id === id ? updated : p,
@@ -344,11 +359,9 @@ export const useAdminStore = create<AdminStore>()(
           return { ok: false as const, error: msg };
         } catch (error) {
           console.error("Error updating product:", error);
-          const axiosError = error as AxiosError<{ error?: string }>;
           return {
             ok: false as const,
-            error:
-              axiosError.response?.data?.error ?? "Failed to update product",
+            error: extractAdminApiError(error, "Failed to update product"),
           };
         }
       },

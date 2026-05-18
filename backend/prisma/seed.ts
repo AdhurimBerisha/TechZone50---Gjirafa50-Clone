@@ -5,11 +5,13 @@ import { fileURLToPath } from "node:url";
 import type { Prisma } from "../src/generated/prisma/client";
 import { prisma } from "../src/lib/prisma";
 
+type SeedSubcategory = { name: string; slug: string };
+
 type SeedCategory = {
   name: string;
   slug: string;
   icon: string;
-  subcategories: unknown;
+  subcategories: SeedSubcategory[];
   megaMenu?: unknown;
 };
 
@@ -30,35 +32,41 @@ async function main(): Promise<void> {
         ? { megaMenu: item.megaMenu as Prisma.InputJsonValue }
         : {};
 
-    await prisma.category.upsert({
+    const category = await prisma.category.upsert({
       where: { slug: item.slug },
       create: {
         slug: item.slug,
         name: item.name,
         icon: item.icon,
         sortOrder: i,
-        subcategories: item.subcategories as Prisma.InputJsonValue,
         ...mega,
       },
       update: {
         name: item.name,
         icon: item.icon,
         sortOrder: i,
-        subcategories: item.subcategories as Prisma.InputJsonValue,
         ...mega,
       },
     });
+
+    const subs = Array.isArray(item.subcategories) ? item.subcategories : [];
+    for (const sub of subs) {
+      await prisma.subcategory.upsert({
+        where: { slug: sub.slug },
+        create: {
+          slug: sub.slug,
+          name: sub.name,
+          categoryId: category.id,
+        },
+        update: {
+          name: sub.name,
+          categoryId: category.id,
+        },
+      });
+    }
   }
 
-  const categories = await prisma.category.findMany();
-  for (const c of categories) {
-    await prisma.product.updateMany({
-      where: { categorySlug: c.slug },
-      data: { categoryId: c.id },
-    });
-  }
-
-  console.log(`Seeded ${items.length} categories and linked products.`);
+  console.log(`Seeded ${items.length} categories with subcategories.`);
 }
 
 main()

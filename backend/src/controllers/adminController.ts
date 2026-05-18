@@ -3,6 +3,14 @@ import { OrderStatus, PaymentStatus } from "../generated/prisma/client";
 import { prisma } from "../lib/prisma";
 import cloudinary from "../lib/cloudinary";
 
+function parseBoolean(value: unknown, defaultValue: boolean): boolean {
+  if (value === undefined || value === null) return defaultValue;
+  if (typeof value === "boolean") return value;
+  if (value === "true" || value === "1") return true;
+  if (value === "false" || value === "0") return false;
+  return Boolean(value);
+}
+
 function parseSubcategorySlugsFromBody(body: unknown): string[] {
   if (body === undefined || body === null) return [];
   if (!Array.isArray(body)) return [];
@@ -489,12 +497,12 @@ const createProduct = async (req: Request, res: Response) => {
         weight: parsedWeight,
 
         // Status
-        isFeatured: Boolean(isFeatured),
+        isFeatured: parseBoolean(isFeatured, false),
 
-        isActive: isActive === undefined ? true : Boolean(isActive),
+        isActive: parseBoolean(isActive, true),
 
         // Outlet
-        isOutlet: Boolean(isOutlet),
+        isOutlet: parseBoolean(isOutlet, false),
 
         outletDiscount: parsedOutletDiscount,
         outletStock: parsedOutletStock,
@@ -612,150 +620,241 @@ const createProduct = async (req: Request, res: Response) => {
 };
 
 const updateProduct = async (req: Request, res: Response) => {
-  const { id } = req.params;
-  const productId = Array.isArray(id) ? id[0] : (id as string);
-  const {
-    name,
-    slug,
-    description,
-    category,
-    categorySlug,
-    price,
-    oldPrice,
-    rating,
-    image,
-    images,
-    stock,
-    isFeatured,
-    isActive,
-    subcategorySlugs: subcategorySlugsBody,
-  } = req.body;
-
-  if (!productId) {
-    return res.status(400).json({ error: "Product ID is required" });
-  }
-
-  let parsedPrice: number | undefined;
-  if (price !== undefined) {
-    parsedPrice = Number(price);
-    if (Number.isNaN(parsedPrice) || parsedPrice < 0) {
-      return res
-        .status(400)
-        .json({ error: "price must be a valid non-negative number" });
-    }
-  }
-
-  let parsedOldPrice: number | null | undefined;
-  if (oldPrice !== undefined) {
-    parsedOldPrice = oldPrice === null ? null : Number(oldPrice);
-    if (oldPrice !== null && Number.isNaN(parsedOldPrice)) {
-      return res
-        .status(400)
-        .json({ error: "oldPrice must be a valid number or null" });
-    }
-  }
-
-  let parsedRating: number | undefined;
-  if (rating !== undefined) {
-    parsedRating = Number(rating);
-    if (Number.isNaN(parsedRating)) {
-      return res.status(400).json({ error: "rating must be a valid number" });
-    }
-  }
-
-  let parsedStock: number | undefined;
-  if (stock !== undefined) {
-    parsedStock = Number(stock);
-    if (!Number.isInteger(parsedStock) || parsedStock < 0) {
-      return res
-        .status(400)
-        .json({ error: "stock must be a valid non-negative integer" });
-    }
-  }
-
-  let normalizedImages: string[] | undefined;
-  if (images !== undefined) {
-    normalizedImages = Array.isArray(images)
-      ? images.filter((item) => typeof item === "string")
-      : typeof images === "string"
-        ? [images]
-        : [];
-  }
-
   try {
-    const updateData: Record<string, unknown> = {};
+    const { id } = req.params;
+    const productId = Array.isArray(id) ? id[0] : (id as string);
 
-    if (name !== undefined) updateData.name = name;
-    if (slug !== undefined) updateData.slug = slug;
-    if (description !== undefined) updateData.description = description;
-    if (category !== undefined) updateData.category = category;
-    if (categorySlug !== undefined) {
-      updateData.categorySlug = categorySlug;
-      const cat = await prisma.category.findUnique({
-        where: { slug: String(categorySlug) },
-      });
-      updateData.categoryId = cat?.id ?? null;
+    if (!productId) {
+      return res.status(400).json({ error: "Product ID is required" });
     }
-    if (parsedPrice !== undefined) updateData.price = parsedPrice;
-    if (parsedOldPrice !== undefined) updateData.oldPrice = parsedOldPrice;
-    if (parsedRating !== undefined) updateData.rating = parsedRating;
-    if (image !== undefined) updateData.image = image;
-    if (normalizedImages !== undefined) updateData.images = normalizedImages;
-    if (parsedStock !== undefined) updateData.stock = parsedStock;
-    if (isFeatured !== undefined) updateData.isFeatured = Boolean(isFeatured);
-    if (isActive !== undefined) updateData.isActive = Boolean(isActive);
 
-    if (subcategorySlugsBody !== undefined) {
-      const subSlugs = parseSubcategorySlugsFromBody(subcategorySlugsBody);
-      const existing = await prisma.product.findUnique({
-        where: { id: productId },
-        include: {
-          category: {
-            select: {
-              slug: true,
+    const {
+      name,
+      slug,
+      description,
+      sku,
+      brand,
+      model,
+      price,
+      oldPrice,
+      rating,
+      image,
+      images,
+      stock,
+      reservedStock,
+      weight,
+      isFeatured,
+      isActive,
+      isOutlet,
+      outletDiscount,
+      outletStock,
+      condition,
+      categoryId,
+      subcategoryId,
+      specifications,
+      variants,
+    } = req.body;
+
+    const data: Record<string, unknown> = {};
+
+    if (name !== undefined) data.name = name;
+    if (slug !== undefined) data.slug = slug;
+    if (description !== undefined) data.description = description;
+    if (sku !== undefined) data.sku = sku;
+    if (brand !== undefined) data.brand = brand;
+    if (model !== undefined) data.model = model;
+
+    if (price !== undefined) {
+      const parsedPrice = Number(price);
+      if (Number.isNaN(parsedPrice) || parsedPrice < 0) {
+        return res
+          .status(400)
+          .json({ error: "price must be a valid non-negative number" });
+      }
+      data.price = parsedPrice;
+    }
+
+    if (oldPrice !== undefined) {
+      const parsedOldPrice = oldPrice === null ? null : Number(oldPrice);
+      if (oldPrice !== null && Number.isNaN(parsedOldPrice)) {
+        return res
+          .status(400)
+          .json({ error: "oldPrice must be a valid number or null" });
+      }
+      data.oldPrice = parsedOldPrice;
+    }
+
+    if (rating !== undefined) {
+      const parsedRating = Number(rating);
+      if (Number.isNaN(parsedRating)) {
+        return res.status(400).json({ error: "rating must be a valid number" });
+      }
+      data.rating = parsedRating;
+    }
+
+    if (stock !== undefined) {
+      const parsedStock = Number(stock);
+      if (!Number.isInteger(parsedStock) || parsedStock < 0) {
+        return res
+          .status(400)
+          .json({ error: "stock must be a valid non-negative integer" });
+      }
+      data.stock = parsedStock;
+    }
+
+    if (reservedStock !== undefined) {
+      const parsedReservedStock = Number(reservedStock);
+      if (!Number.isInteger(parsedReservedStock) || parsedReservedStock < 0) {
+        return res.status(400).json({
+          error: "reservedStock must be a valid non-negative integer",
+        });
+      }
+      data.reservedStock = parsedReservedStock;
+    }
+
+    if (weight !== undefined) {
+      const parsedWeight = weight === null ? null : Number(weight);
+      if (weight !== null && Number.isNaN(parsedWeight)) {
+        return res.status(400).json({ error: "weight must be a valid number" });
+      }
+      data.weight = parsedWeight;
+    }
+
+    if (isFeatured !== undefined) data.isFeatured = parseBoolean(isFeatured, false);
+    if (isActive !== undefined) data.isActive = parseBoolean(isActive, true);
+    if (isOutlet !== undefined) data.isOutlet = parseBoolean(isOutlet, false);
+
+    if (outletDiscount !== undefined) {
+      const parsedOutletDiscount =
+        outletDiscount === null ? null : Number(outletDiscount);
+      if (
+        outletDiscount !== null &&
+        Number.isNaN(parsedOutletDiscount)
+      ) {
+        return res
+          .status(400)
+          .json({ error: "outletDiscount must be a valid number" });
+      }
+      data.outletDiscount = parsedOutletDiscount;
+    }
+
+    if (outletStock !== undefined) {
+      const parsedOutletStock =
+        outletStock === null ? null : Number(outletStock);
+      if (
+        parsedOutletStock !== null &&
+        (!Number.isInteger(parsedOutletStock) || parsedOutletStock < 0)
+      ) {
+        return res
+          .status(400)
+          .json({ error: "outletStock must be a valid non-negative integer" });
+      }
+      data.outletStock = parsedOutletStock;
+    }
+
+    if (condition !== undefined) {
+      const validConditions = ["NEW", "OPEN_BOX", "REFURBISHED"];
+      if (!validConditions.includes(condition)) {
+        return res.status(400).json({
+          error: "condition must be one of: NEW, OPEN_BOX, REFURBISHED",
+        });
+      }
+      data.condition = condition;
+    }
+
+    if (images !== undefined) {
+      data.images = Array.isArray(images)
+        ? images.filter((item: unknown) => typeof item === "string")
+        : typeof images === "string"
+          ? [images]
+          : [];
+    }
+
+    let imageUrl = image;
+    if (req.file) {
+      try {
+        const result = await new Promise((resolve, reject) => {
+          const stream = cloudinary.uploader.upload_stream(
+            {
+              folder: "products",
+              public_id: slug || `product-${Date.now()}`,
+              resource_type: "image",
             },
-          },
-        },
-      });
-      const slugForSubs =
-        categorySlug !== undefined
-          ? String(categorySlug)
-          : (existing?.category?.slug ?? "");
-      if (!slugForSubs) {
-        return res.status(400).json({
-          error:
-            "Cannot set subcategories without a category slug on the product",
+            (error, uploadResult) => {
+              if (error) reject(error);
+              else resolve(uploadResult);
+            },
+          );
+          stream.end(req.file!.buffer);
         });
+        imageUrl = (result as { secure_url: string }).secure_url;
+      } catch (uploadError) {
+        console.error("Error uploading image:", uploadError);
+        return res.status(500).json({ error: "Failed to upload image" });
       }
-      const subCheck = await validateSubcategorySlugsForCategory(
-        slugForSubs,
-        subSlugs,
-      );
-      if (!subCheck.ok) {
-        return res.status(400).json({
-          error: `Nën-kategori të pavlefshme: ${subCheck.invalid.join(", ")}`,
+    }
+
+    if (imageUrl !== undefined) {
+      data.image = imageUrl;
+      if (Array.isArray(data.images)) {
+        const imgs = data.images as string[];
+        if (imageUrl && !imgs.includes(imageUrl)) {
+          data.images = [imageUrl, ...imgs];
+        }
+      }
+    }
+
+    if (categoryId !== undefined) {
+      if (categoryId === null || categoryId === "") {
+        data.category = { disconnect: true };
+      } else {
+        const categoryExists = await prisma.category.findUnique({
+          where: { id: String(categoryId) },
         });
+        if (!categoryExists) {
+          return res.status(404).json({ error: "Category not found" });
+        }
+        data.category = { connect: { id: String(categoryId) } };
       }
-      updateData.subcategorySlugs = subSlugs;
+    }
+
+    if (subcategoryId !== undefined) {
+      if (subcategoryId === null || subcategoryId === "") {
+        data.subcategory = { disconnect: true };
+      } else {
+        const subcategoryExists = await prisma.subcategory.findUnique({
+          where: { id: String(subcategoryId) },
+        });
+        if (!subcategoryExists) {
+          return res.status(404).json({ error: "Subcategory not found" });
+        }
+        data.subcategory = { connect: { id: String(subcategoryId) } };
+      }
     }
 
     const product = await prisma.product.update({
       where: { id: productId },
-      data: updateData,
+      data: data as Parameters<typeof prisma.product.update>[0]["data"],
+      include: {
+        category: true,
+        subcategory: true,
+        specifications: true,
+        variants: { include: { options: true } },
+      },
     });
 
     return res.status(200).json({ success: true, product });
   } catch (error) {
     console.error("Error updating product:", error);
 
-    if ((error as any)?.code === "P2025") {
+    if ((error as { code?: string })?.code === "P2025") {
       return res.status(404).json({ error: "Product not found" });
     }
 
-    if ((error as any)?.code === "P2002") {
+    if ((error as { code?: string })?.code === "P2002") {
       return res
         .status(409)
-        .json({ error: "A product with this slug already exists" });
+        .json({ error: "A product with this slug or SKU already exists" });
     }
 
     return res.status(500).json({ error: "Failed to update product" });
@@ -814,7 +913,7 @@ const toggleProductAvailability = async (req: Request, res: Response) => {
       data: { isActive: !existingProduct.isActive },
     });
 
-    return res.status(200).json({ success: true, product: updateProduct });
+    return res.status(200).json({ success: true, product: updatedProduct });
   } catch (error) {
     console.error("Toggle product availability error:", error);
     return res
