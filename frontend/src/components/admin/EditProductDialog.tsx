@@ -221,6 +221,7 @@ export function EditProductDialog({
       description: description.trim() || undefined,
       category: cat,
       categorySlug: cat.slug,
+      categoryId: cat.id,
       price: parsedPrice,
       oldPrice: parsedOld,
       rating: parsedRating,
