@@ -1,4 +1,5 @@
 import type { Category } from "@/data/products";
+import { normalizeSubcategoryList } from "@/lib/categoryShape";
 
 export type SubcategoryOption = { slug: string; label: string };
 
@@ -8,7 +9,7 @@ export function subcategoryOptionsForCategory(
 ): SubcategoryOption[] {
   if (!cat) return [];
   const map = new Map<string, string>();
-  for (const sub of cat.subcategories) {
+  for (const sub of normalizeSubcategoryList(cat.subcategories)) {
     map.set(sub.slug, sub.name);
   }
   if (cat.megaMenu?.columns) {

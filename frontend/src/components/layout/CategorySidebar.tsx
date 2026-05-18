@@ -12,6 +12,7 @@ import {
   Menu,
 } from "lucide-react";
 import type { Category, MegaMenu } from "@/data/products";
+import { normalizeSubcategoryList } from "@/lib/categoryShape";
 import { useCategoryStore } from "@/stores/categoryStore";
 
 const ACCENT = "text-[#e64a19]";
@@ -35,7 +36,7 @@ function megaMenuForCategory(cat: Category): MegaMenu {
       columns: [
         {
           title: "Nën kategori",
-          links: cat.subcategories,
+          links: normalizeSubcategoryList(cat.subcategories),
           showMore: true,
         },
       ],

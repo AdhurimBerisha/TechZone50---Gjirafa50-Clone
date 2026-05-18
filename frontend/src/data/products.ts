@@ -41,7 +41,7 @@ export interface Category {
   name: string;
   slug: string;
   icon: string;
-  subcategories: { name: string; slug: string }[];
+  subcategories: { id?: string; name: string; slug: string }[];
   megaMenu?: MegaMenu;
 }
 

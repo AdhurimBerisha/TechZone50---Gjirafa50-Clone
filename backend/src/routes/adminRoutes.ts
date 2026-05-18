@@ -29,7 +29,7 @@ router.get("/dashboard", getAdminDashboard);
 router.get("/users", getAllUsers);
 router.get("/products", getAllProducts);
 router.post("/products", upload.single("image"), createProduct);
-router.put("/products/:id", updateProduct);
+router.put("/products/:id", upload.single("image"), updateProduct);
 router.get("/orders", getAdminOrders);
 router.get("/top-products", getTopSellingProducts);
 router.get("/settings", getAdminSettings);

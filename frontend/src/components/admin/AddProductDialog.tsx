@@ -17,6 +17,8 @@ import { useAdminStore } from "@/stores/adminStore";
 import { useCategoryStore } from "@/stores/categoryStore";
 import { subcategoryOptionsForCategory } from "@/lib/adminSubcategoryOptions";
 import { ProductSubcategoryPicker } from "@/components/admin/ProductSubcategoryPicker";
+import { resolveCategoryRelationIds } from "@/lib/adminProductPayload";
+import type { CreateProductPayload } from "@/lib/adminProductPayload";
 
 function slugifyName(name: string): string {
   const base = name
@@ -196,46 +198,37 @@ export function AddProductDialog({
       parsedOutletStock = n;
     }
 
+    const relation = resolveCategoryRelationIds(
+      categories,
+      categorySlug,
+      subSlugs,
+    );
+    if ("error" in relation) {
+      setFormError(relation.error);
+      return;
+    }
+
     const trimmedImage = imagePreview.trim();
-    const payload = {
+    const payload: CreateProductPayload = {
       name: trimmedName,
       slug: trimmedSlug,
       description: description.trim() || undefined,
-      category: cat.name,
-      categorySlug: cat.slug,
       price: parsedPrice,
       oldPrice: parsedOld,
-      rating: parsedRating,
       image: trimmedImage || undefined,
       images: trimmedImage ? [trimmedImage] : [],
       stock: parsedStock,
       isFeatured,
       isActive,
-      subcategorySlugs: subSlugs,
       isOutlet,
       outletDiscount: parsedOutletDiscount,
       outletStock: parsedOutletStock,
       condition,
+      categoryId: relation.categoryId,
+      subcategoryId: relation.subcategoryId,
     };
 
     setSubmitting(true);
-
-    // Create FormData for file upload
-    const formData = new FormData();
-    Object.entries(payload).forEach(([key, value]) => {
-      if (value !== undefined && value !== null) {
-        if (Array.isArray(value)) {
-          value.forEach((item) => formData.append(key, item));
-        } else {
-          formData.append(key, String(value));
-        }
-      }
-    });
-
-    // Add the image file if present
-    if (image) {
-      formData.append("image", image);
-    }
 
     const token = await getToken();
     if (!token) {
@@ -244,7 +237,7 @@ export function AddProductDialog({
       return;
     }
 
-    const result = await createProduct(token, formData);
+    const result = await createProduct(token, payload, image);
     setSubmitting(false);
 
     if (result.ok) {
